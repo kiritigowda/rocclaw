@@ -9,12 +9,12 @@ import {
   Server, 
   Clock,
   Wifi,
-  Thermometer,
   Zap
 } from "lucide-react";
 
 interface SystemMetrics {
   cpu: {
+    name: string;
     usage: number;
     cores: number;
     temperature: number | null;
@@ -37,6 +37,7 @@ interface SystemMetrics {
     usage: number;
   };
   gpu: {
+    name: string;
     usage: number | null;
     temperature: number | null;
     memory: {
@@ -64,32 +65,39 @@ interface SystemMetrics {
 function MetricRow({ 
   icon: Icon, 
   label, 
+  name,
   value, 
   subtext,
   alert 
 }: { 
   icon: React.ComponentType<{ className?: string }>; 
-  label: string; 
+  label: string;
+  name?: string;
   value: string; 
   subtext: string;
   alert?: boolean;
 }) {
   return (
-    <div className={`flex items-center justify-between p-3 rounded-lg border ${
+    <div className={`p-3 rounded-lg border ${
       alert ? "bg-red-500/10 border-red-500/30" : "bg-surface-1 border-border"
     }`}>
-      <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-md ${alert ? "bg-red-500/20" : "bg-surface-2"}`}>
-          <Icon className={`w-4 h-4 ${alert ? "text-red-500" : "text-primary"}`} />
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-md ${alert ? "bg-red-500/20" : "bg-surface-2"}`}>
+            <Icon className={`w-4 h-4 ${alert ? "text-red-500" : "text-primary"}`} />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">{label}</p>
+            {name && (
+              <p className="text-[10px] text-muted-foreground truncate max-w-[120px]">{name}</p>
+            )}
+          </div>
         </div>
-        <div>
-          <p className="text-sm font-medium text-foreground">{label}</p>
-          <p className="text-xs text-muted-foreground">{subtext}</p>
+        <div className="text-right">
+          <p className={`text-lg font-bold ${alert ? "text-red-500" : "text-foreground"}`}>{value}</p>
         </div>
       </div>
-      <div className="text-right">
-        <p className={`text-lg font-bold ${alert ? "text-red-500" : "text-foreground"}`}>{value}</p>
-      </div>
+      <p className="text-xs text-muted-foreground mt-2">{subtext}</p>
     </div>
   );
 }
@@ -156,6 +164,12 @@ export function SystemMetricsDashboard() {
   const formatTemp = (temp: number | null) => temp !== null ? `${temp}°C` : "N/A";
   const formatSpeed = (kbps: number) => kbps > 1024 ? `${(kbps/1024).toFixed(1)} MB/s` : `${kbps} KB/s`;
 
+  // Truncate CPU name for display
+  const truncateName = (name: string, maxLen: number = 25) => {
+    if (name.length <= maxLen) return name;
+    return name.substring(0, maxLen) + '...';
+  };
+
   return (
     <div className="ui-panel ui-depth-workspace p-4 h-full overflow-y-auto">
       { /* Header */ }
@@ -173,6 +187,7 @@ export function SystemMetricsDashboard() {
         <MetricRow
           icon={Cpu}
           label="CPU"
+          name={truncateName(metrics.cpu.name)}
           value={`${Math.round(metrics.cpu.usage)}%`}
           subtext={`${metrics.cpu.cores} cores • Load: ${metrics.cpu.loadAvg[0].toFixed(2)} • ${formatTemp(metrics.cpu.temperature)}`}
           alert={metrics.cpu.usage > 80}
@@ -205,6 +220,7 @@ export function SystemMetricsDashboard() {
           <MetricRow
             icon={Activity}
             label="GPU"
+            name={truncateName(metrics.gpu[0].name)}
             value={`${Math.round(metrics.gpu[0].usage || 0)}%`}
             subtext={metrics.gpu[0]?.memory.used ? 
               `${formatGB(metrics.gpu[0].memory.used)} / ${formatGB(metrics.gpu[0].memory.total || 0)} • ${formatTemp(metrics.gpu[0]?.temperature)}` :

@@ -9,6 +9,7 @@ import si from 'systeminformation';
 
 export interface SystemMetrics {
   cpu: {
+    name: string;
     usage: number;
     cores: number;
     temperature: number | null;
@@ -31,6 +32,7 @@ export interface SystemMetrics {
     usage: number;
   };
   gpu: {
+    name: string;
     usage: number | null;
     temperature: number | null;
     memory: {
@@ -61,6 +63,7 @@ export async function GET(
   try {
     const [
       cpuData,
+      cpuInfo,
       cpuTemp,
       memData,
       diskData,
@@ -70,6 +73,7 @@ export async function GET(
       osInfo,
     ] = await Promise.all([
       si.currentLoad(),
+      si.cpu(),
       si.cpuTemperature().catch(() => ({ main: null, cores: [], max: null })),
       si.mem(),
       si.fsSize(),
@@ -94,6 +98,7 @@ export async function GET(
     const gpuMetrics = gpuData.controllers
       .filter(gpu => gpu.model || gpu.vendor) // Filter out empty entries
       .map(gpu => ({
+        name: gpu.model || gpu.vendor || 'Unknown GPU',
         usage: gpu.utilizationGpu !== null ? Math.round(gpu.utilizationGpu) : null,
         temperature: gpu.temperatureGpu !== null ? Math.round(gpu.temperatureGpu) : null,
         memory: {
@@ -102,8 +107,12 @@ export async function GET(
         },
       }));
 
+    // Format CPU name
+    const cpuName = cpuInfo.brand || cpuInfo.manufacturer || 'Unknown CPU';
+
     const metrics: SystemMetrics = {
       cpu: {
+        name: cpuName,
         usage: cpuUsage,
         cores: cpuData.cpus.length,
         temperature: cpuTemp.main !== null ? Math.round(cpuTemp.main) : null,
