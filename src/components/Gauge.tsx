@@ -12,11 +12,11 @@ interface GaugeProps {
   detail: string;
 }
 
-export function Speedometer({ 
+export function RetroSpeedometer({ 
   value, 
   min = 0, 
   max = 100, 
-  size = 140,
+  size = 160,
   color = "text-primary",
   label,
   detail
@@ -25,7 +25,7 @@ export function Speedometer({
   
   // Animate the value
   useEffect(() => {
-    const duration = 500;
+    const duration = 600;
     const start = displayValue;
     const end = value;
     const startTime = performance.now();
@@ -33,8 +33,8 @@ export function Speedometer({
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-      setDisplayValue(Math.round(start + (end - start) * easeOutQuart));
+      const easeOutBack = 1 - Math.pow(1 - progress, 3);
+      setDisplayValue(Math.round(start + (end - start) * easeOutBack));
       
       if (progress < 1) {
         requestAnimationFrame(animate);
@@ -45,69 +45,116 @@ export function Speedometer({
   }, [value]);
 
   const percentage = Math.min(Math.max((displayValue - min) / (max - min), 0), 1);
-  const circumference = 2 * Math.PI * 45; // radius = 45
-  const strokeDashoffset = circumference - (percentage * circumference * 0.75); // 270 degrees (3/4 circle)
+  const angle = percentage * 270 - 135; // -135 to 135 degrees
   
   // Determine color based on value
   const getColorClass = () => {
-    if (displayValue >= 80) return "text-red-500";
-    if (displayValue >= 60) return "text-yellow-500";
-    return color;
+    if (displayValue >= 90) return "text-red-500";
+    if (displayValue >= 75) return "text-amber-500";
+    if (displayValue >= 50) return "text-yellow-400";
+    return "text-green-500";
   };
 
-  const getStrokeColor = () => {
-    if (displayValue >= 80) return "#ef4444";
-    if (displayValue >= 60) return "#eab308";
-    return "currentColor";
+  const getNeedleColor = () => {
+    if (displayValue >= 90) return "#ef4444";
+    if (displayValue >= 75) return "#f59e0b";
+    if (displayValue >= 50) return "#facc15";
+    return "#22c55e";
   };
 
+  // Generate tick marks
+  const ticks = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+  
   return (
-    <div className="ui-panel p-4 flex flex-col items-center">
-      <div className="relative" style={{ width: size, height: size * 0.75 }}>
+    <div className="relative rounded-xl border-2 border-slate-700 bg-slate-900 p-4 shadow-inner">
+      {/* Outer bezel effect */}
+      <div className="absolute inset-0 rounded-xl border border-slate-600 opacity-50" />
+      
+      <div className="relative" style={{ width: size, height: size * 0.6 }}>
         <svg
           width={size}
-          height={size * 0.75}
-          viewBox="0 0 100 75"
-          className="transform -rotate-[135deg]"
+          height={size * 0.6}
+          viewBox="0 0 160 100"
+          className="drop-shadow-lg"
         >
+          <defs>
+            {/* Inner shadow gradient */}
+            <radialGradient id="gaugeBg" cx="50%" cy="100%" r="80%">
+              <stop offset="0%" stopColor="#1e293b" />
+              <stop offset="100%" stopColor="#0f172a" />
+            </radialGradient>
+            
+            {/* Glow filter for needle */}
+            <filter id="needleGlow">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          
           {/* Background arc */}
-          <circle
-            cx="50"
-            cy="50"
-            r="45"
+          <path
+            d="M 20 80 A 60 60 0 0 1 140 80"
             fill="none"
-            stroke="currentColor"
-            strokeWidth="8"
+            stroke="#334155"
+            strokeWidth="12"
             strokeLinecap="round"
-            className="text-surface-2"
-            strokeDasharray={`${circumference * 0.75} ${circumference}`}
           />
           
-          {/* Value arc */}
-          <circle
-            cx="50"
-            cy="50"
-            r="45"
+          {/* Colored zones */}
+          <!-- Green zone (0-50%) -->
+          <path
+            d="M 20 80 A 60 60 0 0 1 50 28"
             fill="none"
-            stroke={getStrokeColor()}
+            stroke="#22c55e"
             strokeWidth="8"
             strokeLinecap="round"
-            className={`transition-all duration-500 ${getColorClass()}`}
-            strokeDasharray={`${circumference * 0.75} ${circumference}`}
-            strokeDashoffset={strokeDashoffset}
-            style={{
-              filter: "drop-shadow(0 0 4px currentColor)",
-            }}
+            opacity="0.6"
+          />
+          <!-- Yellow zone (50-75%) -->
+          <path
+            d="M 50 28 A 60 60 0 0 1 95 28"
+            fill="none"
+            stroke="#eab308"
+            strokeWidth="8"
+            strokeLinecap="round"
+            opacity="0.6"
+          />
+          <!-- Amber zone (75-90%) -->
+          <path
+            d="M 95 28 A 60 60 0 0 1 125 50"
+            fill="none"
+            stroke="#f59e0b"
+            strokeWidth="8"
+            strokeLinecap="round"
+            opacity="0.6"
+          />
+          <!-- Red zone (90-100%) -->
+          <path
+            d="M 125 50 A 60 60 0 0 1 140 80"
+            fill="none"
+            stroke="#ef4444"
+            strokeWidth="8"
+            strokeLinecap="round"
+            opacity="0.6"
           />
           
-          {/* Ticks */}
-          {[0, 25, 50, 75, 100].map((tick) => {
-            const angle = (tick / 100) * 270 - 135;
-            const rad = (angle * Math.PI) / 180;
-            const x1 = 50 + 35 * Math.cos(rad);
-            const y1 = 50 + 35 * Math.sin(rad);
-            const x2 = 50 + 42 * Math.cos(rad);
-            const y2 = 50 + 42 * Math.sin(rad);
+          {/* Tick marks */}
+          {ticks.map((tick) => {
+            const tickAngle = (tick / 100) * 270 - 135;
+            const rad = (tickAngle * Math.PI) / 180;
+            const innerR = 52;
+            const outerR = tick % 50 === 0 ? 62 : tick % 10 === 0 ? 58 : 55;
+            const x1 = 80 + innerR * Math.cos(rad);
+            const y1 = 80 + innerR * Math.sin(rad);
+            const x2 = 80 + outerR * Math.cos(rad);
+            const y2 = 80 + outerR * Math.sin(rad);
+            const labelR = 45;
+            const lx = 80 + labelR * Math.cos(rad);
+            const ly = 80 + labelR * Math.sin(rad);
+            
             return (
               <g key={tick}>
                 <line
@@ -115,47 +162,79 @@ export function Speedometer({
                   y1={y1}
                   x2={x2}
                   y2={y2}
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  className="text-muted-foreground"
+                  stroke={tick % 50 === 0 ? "#94a3b8" : "#64748b"}
+                  strokeWidth={tick % 50 === 0 ? 2 : 1}
                 />
-                <text
-                  x={50 + 30 * Math.cos(rad)}
-                  y={50 + 30 * Math.sin(rad)}
-                  fill="currentColor"
-                  fontSize="6"
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  className="text-muted-foreground"
-                >
-                  {tick}
-                </text>
+                {tick % 25 === 0 && (
+                  <text
+                    x={lx}
+                    y={ly}
+                    fill="#94a3b8"
+                    fontSize="8"
+                    fontFamily="monospace"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                  >
+                    {tick}
+                  </text>
+                )}
               </g>
             );
           })}
+          
+          {/* Needle */}
+          <g transform={`rotate(${angle} 80 80)`}>
+            <polygon
+              points="80,20 76,78 80,75 84,78"
+              fill={getNeedleColor()}
+              filter="url(#needleGlow)"
+            />
+            <circle cx="80" cy="80" r="4" fill="#475569" />
+            <circle cx="80" cy="80" r="2" fill="#94a3b8" />
+          </g>
+          
+          {/* Glass reflection effect */}
+          <defs>
+            <linearGradient id="glass" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="white" stopOpacity="0.1" />
+              <stop offset="50%" stopColor="white" stopOpacity="0" />
+              <stop offset="100%" stopColor="white" stopOpacity="0.05" />
+            </linearGradient>
+          </defs>
+          <ellipse
+            cx="80"
+            cy="60"
+            rx="50"
+            ry="35"
+            fill="url(#glass)"
+          />
         </svg>
         
-        {/* Center value display */}
-        <div className="absolute inset-0 flex flex-col items-center justify-end pb-2">
-          <span className={`text-3xl font-bold ${getColorClass()}`}>
-            {displayValue}
-            <span className="text-lg">%</span>
-          </span>
+        {/* Digital readout below */}
+        <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center">
+          <div className="bg-slate-800 border border-slate-600 rounded px-3 py-1 shadow-inner">
+            <span className={`text-xl font-bold font-mono ${getColorClass()}`}>
+              {displayValue.toString().padStart(3, '0')}
+            </span>
+            <span className="text-xs text-slate-400 ml-1">%</span>
+          </div>
         </div>
       </div>
       
-      <div className="mt-2 text-center">
-        <p className="text-sm font-medium text-foreground">{label}</p>
-        <p className="text-[10px] text-muted-foreground mt-1">{detail}</p>
+      <div className="mt-4 text-center">
+        <p className="text-sm font-semibold text-slate-200 tracking-wide uppercase">
+          {label}
+        </p>
+        <p className="text-[10px] text-slate-400 mt-1 font-mono">{detail}</p>
       </div>
     </div>
   );
 }
 
-// Simple circular gauge for smaller displays
-export function CircularGauge({ 
+// Simple retro circular gauge for smaller displays
+export function RetroCircularGauge({ 
   value, 
-  size = 80,
+  size = 100,
   color = "text-primary",
   label
 }: { 
@@ -165,50 +244,84 @@ export function CircularGauge({
   label: string;
 }) {
   const percentage = Math.min(Math.max(value, 0), 100);
-  const circumference = 2 * Math.PI * 35;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  const angle = (percentage / 100) * 360;
   
-  const getColorClass = () => {
-    if (value >= 80) return "text-red-500";
-    if (value >= 60) return "text-yellow-500";
-    return color;
+  const getColor = () => {
+    if (value >= 90) return "#ef4444";
+    if (value >= 75) return "#f59e0b";
+    if (value >= 50) return "#eab308";
+    return "#22c55e";
   };
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="relative rounded-full border-2 border-slate-700 bg-slate-900 p-2">
       <div className="relative" style={{ width: size, height: size }}>
-        <svg width={size} height={size} viewBox="0 0 80 80">
+        <svg width={size} height={size} viewBox="0 0 100 100">
+          <defs>
+            <radialGradient id="retroGaugeBg" cx="50%" cy="50%" r="50%">
+              <stop offset="80%" stopColor="#1e293b" />
+              <stop offset="100%" stopColor="#0f172a" />
+            </radialGradient>
+          </defs>
+          
+          {/* Background */}
+          <circle cx="50" cy="50" r="45" fill="url(#retroGaugeBg)" />
+          
+          {/* Outer ring */}
           <circle
-            cx="40"
-            cy="40"
-            r="35"
+            cx="50"
+            cy="50"
+            r="42"
             fill="none"
-            stroke="currentColor"
-            strokeWidth="6"
-            className="text-surface-2"
+            stroke="#334155"
+            strokeWidth="2"
           />
+          
+          {/* Value arc */}
           <circle
-            cx="40"
-            cy="40"
-            r="35"
+            cx="50"
+            cy="50"
+            r="38"
             fill="none"
-            stroke="currentColor"
-            strokeWidth="6"
+            stroke={getColor()}
+            strokeWidth="4"
             strokeLinecap="round"
-            className={`transition-all duration-500 ${getColorClass()}`}
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
-            transform="rotate(-90 40 40)"
+            strokeDasharray={`${(percentage / 100) * 239} 239`}
+            transform="rotate(-90 50 50)"
+            className="transition-all duration-500"
           />
+          
+          {/* Ticks */}
+          {[0, 25, 50, 75, 100].map((tick) => {
+            const tickAngle = (tick / 100) * 360 - 90;
+            const rad = (tickAngle * Math.PI) / 180;
+            const x = 50 + 32 * Math.cos(rad);
+            const y = 50 + 32 * Math.sin(rad);
+            return (
+              <circle
+                key={tick}
+                cx={x}
+                cy={y}
+                r={tick % 50 === 0 ? 2 : 1}
+                fill="#64748b"
+              />
+            );
+          })}
         </svg>
         
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className={`text-sm font-bold ${getColorClass()}`}>
-            {Math.round(value)}%
-          </span>
+          <div className="text-center">
+            <span className="text-lg font-bold font-mono" style={{ color: getColor() }}>
+              {Math.round(value)}
+            </span>
+            <span className="text-xs text-slate-400">%</span>
+          </div>
         </div>
       </div>
-      <span className="text-[10px] text-muted-foreground mt-1">{label}</span>
+      
+      <span className="text-[10px] text-slate-400 mt-1 block text-center font-mono uppercase">
+        {label}
+      </span>
     </div>
   );
 }
