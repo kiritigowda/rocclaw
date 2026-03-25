@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { SystemInfoPanel } from "@/components/SystemInfo";
 import type { GatewayStatus } from "@/lib/gateway/gateway-status";
-import { Plug } from "lucide-react";
+import { Plug, Terminal } from "lucide-react";
 import { resolveGatewayStatusBadgeClass, resolveGatewayStatusLabel } from "./colorSemantics";
 
 type HeaderBarProps = {
@@ -39,16 +38,24 @@ export const HeaderBar = ({
 
   return (
     <div className="ui-topbar relative z-[180]">
-      <div className="grid h-10 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center px-3 sm:px-4 md:px-5">
-        <div className="flex items-center">
-          <SystemInfoPanel />
+      <div className="grid h-14 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center px-3 sm:px-4 md:px-5">
+        <div aria-hidden="true" />
+        <div className="flex items-center gap-3">
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30">
+            <Terminal className="h-5 w-5 text-white" />
+          </div>
+          <div className="flex flex-col">
+            <h1 className="text-xl font-bold tracking-tight text-foreground">
+              rocCLAW
+            </h1>
+            <span className="text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
+              System Control
+            </span>
+          </div>
         </div>
-        <p className="truncate text-sm font-semibold tracking-[0.01em] text-foreground">
-          rocCLAW
-        </p>
-        <div className="flex items-center justify-end gap-1">
+        <div className="flex items-center justify-end gap-2">
           <span
-            className={`ui-chip px-2 py-0.5 font-mono text-[9px] font-semibold tracking-[0.08em] ${resolveGatewayStatusBadgeClass(status)}`}
+            className={`ui-chip px-2.5 py-1 font-mono text-[10px] font-semibold tracking-[0.06em] ${resolveGatewayStatusBadgeClass(status)}`}
             data-testid="gateway-status-indicator"
             data-status={status}
           >

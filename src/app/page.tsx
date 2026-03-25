@@ -13,6 +13,7 @@ import { HeaderBar } from "@/features/agents/components/HeaderBar";
 import { ConnectionPanel } from "@/features/agents/components/ConnectionPanel";
 import { GatewayConnectScreen } from "@/features/agents/components/GatewayConnectScreen";
 import { EmptyStatePanel } from "@/features/agents/components/EmptyStatePanel";
+import { SystemDashboard } from "@/components/SystemDashboard";
 import {
   isHeartbeatPrompt,
 } from "@/lib/text/message-extract";
@@ -1382,10 +1383,10 @@ const AgentStudioPage = () => {
         <div className="flex min-h-dvh items-center justify-center px-6">
           <div className="glass-panel ui-panel flex w-full max-w-md flex-col items-center px-6 py-6 text-center">
             <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              OpenClaw Studio
+              rocCLAW
             </div>
             <div className="mt-3 text-sm text-muted-foreground">
-              {gatewayConnecting ? "Connecting to gateway…" : "Booting Studio…"}
+              {gatewayConnecting ? "Connecting to gateway…" : "Booting…"}
             </div>
             <button
               type="button"
@@ -1671,7 +1672,7 @@ const AgentStudioPage = () => {
           ) : (
             <div className="flex min-h-0 flex-1 flex-col gap-4 xl:flex-row">
               <div className="glass-panel ui-panel p-2 xl:hidden" data-testid="mobile-pane-toggle">
-                <div className="ui-segment grid-cols-2">
+                <div className="ui-segment grid-cols-3">
                   <button
                     type="button"
                     className="ui-segment-item px-2 py-2 font-mono text-[12px] font-medium tracking-[0.02em]"
@@ -1687,6 +1688,14 @@ const AgentStudioPage = () => {
                     onClick={() => setMobilePane("chat")}
                   >
                     Chat
+                  </button>
+                  <button
+                    type="button"
+                    className="ui-segment-item px-2 py-2 font-mono text-[12px] font-medium tracking-[0.02em]"
+                    data-active={mobilePane === "metrics" ? "true" : "false"}
+                    onClick={() => setMobilePane("metrics")}
+                  >
+                    Metrics
                   </button>
                 </div>
               </div>
@@ -1774,6 +1783,11 @@ const AgentStudioPage = () => {
                     className="items-center p-6 text-center text-sm"
                   />
                 )}
+              </div>
+              <div
+                className={`${mobilePane === "metrics" ? "block" : "hidden"} min-h-0 xl:block xl:min-h-0 xl:w-[320px]`}
+              >
+                <SystemDashboard />
               </div>
             </div>
           )}
