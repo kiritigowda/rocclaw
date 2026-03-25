@@ -1695,13 +1695,12 @@ const AgentStudioPage = () => {
                 {/* Chat Tab */}
                 {activeTabs.includes("chat") ? (
                   <div
-                    className="ui-panel ui-depth-workspace min-h-0 flex-1 overflow-hidden"
+                    className="ui-panel ui-depth-workspace flex h-full min-h-0 flex-1 flex-col overflow-hidden"
                     data-testid="focused-agent-panel"
                   >
                     {focusedAgent ? (
-                      <div className="flex min-h-0 flex-1 flex-col">
-                        <div className="min-h-0 flex-1">
-                          <AgentChatPanel
+                      <div className="flex h-full min-h-0 flex-1 flex-col">
+                        <AgentChatPanel
                             agent={focusedAgent}
                             isSelected={false}
                             canSend={gatewayConnected}
@@ -1746,7 +1745,6 @@ const AgentStudioPage = () => {
                               void handleResolveExecApproval(id, decision);
                             }}
                           />
-                        </div>
                       </div>
                     ) : (
                       <EmptyStatePanel
@@ -1767,15 +1765,14 @@ const AgentStudioPage = () => {
 
                 {/* Tokens Tab */}
                 {activeTabs.includes("tokens") ? (
-                  <div className="min-h-0 flex-1 overflow-hidden">
+                  <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
                     <SystemDashboard />
                   </div>
                 ) : null}
 
                 {/* System Tab */}
                 {activeTabs.includes("system") ? (
-                  <div className="ui-panel ui-depth-workspace min-h-0 flex-1 overflow-hidden"
-                  >
+                  <div className="ui-panel ui-depth-workspace flex h-full min-h-0 flex-1 flex-col overflow-hidden">
                     <EmptyStatePanel
                       title="System Information"
                       description="System metrics and health status will be displayed here."
@@ -1787,8 +1784,7 @@ const AgentStudioPage = () => {
 
                 {/* Settings Tab */}
                 {activeTabs.includes("settings") ? (
-                  <div className="ui-panel ui-depth-workspace min-h-0 flex-1 overflow-hidden"
-                  >
+                  <div className="ui-panel ui-depth-workspace flex h-full min-h-0 flex-1 flex-col overflow-hidden">
                     <EmptyStatePanel
                       title="Settings"
                       description="Configure your workspace settings here."
