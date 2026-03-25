@@ -242,7 +242,7 @@ export function SystemMetricsDashboard() {
 
   useEffect(() => {
     fetchMetrics();
-    const interval = setInterval(fetchMetrics, 2000);
+    const interval = setInterval(fetchMetrics, 5000); // Refresh every 5s instead of 2s
     return () => clearInterval(interval);
   }, [fetchMetrics]);
 
