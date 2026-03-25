@@ -1676,7 +1676,7 @@ const AgentStudioPage = () => {
               <div className="flex min-h-0 flex-1 flex-row gap-4">
                 {/* Agents Tab */}
                 {activeTabs.includes("agents") ? (
-                  <div className="min-h-0 flex-1 overflow-hidden">
+                  <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
                     <FleetSidebar
                       agents={filteredAgents}
                       selectedAgentId={focusedAgent?.agentId ?? state.selectedAgentId}

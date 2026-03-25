@@ -34,7 +34,8 @@ export const FleetSidebar = ({
   onCreateAgent,
   createDisabled = false,
   createBusy = false,
-}: FleetSidebarProps) => {
+  className,
+}: FleetSidebarProps & { className?: string }) => {
   const rowRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const previousTopByAgentIdRef = useRef<Map<string, number>>(new Map());
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -71,7 +72,7 @@ export const FleetSidebar = ({
 
   return (
     <aside
-      className="glass-panel fade-up-delay ui-panel ui-depth-sidepanel relative flex h-full w-full min-w-72 flex-col gap-3 bg-sidebar p-3 xl:max-w-[320px] xl:border-r xl:border-sidebar-border"
+      className={`glass-panel fade-up-delay ui-panel ui-depth-sidepanel relative flex h-full flex-1 flex-col gap-3 bg-sidebar p-3 border-r border-sidebar-border ${className || ""}`}
       data-testid="fleet-sidebar"
     >
       <div className="flex items-center justify-between gap-2 px-1">
