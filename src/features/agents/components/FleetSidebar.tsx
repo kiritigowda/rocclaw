@@ -163,8 +163,8 @@ export const FleetSidebar = ({
                     </p>
                   )}
                   
-                  {/* Agent Name - below identity */}
-                  <p className="font-semibold text-foreground text-base truncate w-full mb-2">
+                  {/* Agent Name - below identity, muted, smaller */}
+                  <p className="text-muted-foreground text-sm truncate w-full mb-2">
                     {agent.name}
                   </p>
                   
