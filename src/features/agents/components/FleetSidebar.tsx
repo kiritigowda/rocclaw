@@ -75,9 +75,9 @@ export const FleetSidebar = ({
     return name.length > 8 ? name.substring(0, 8) : name;
   };
 
-  // Get soul name from agent
+  // Get soul name from agent identity
   const getSoulName = (agent: AgentState) => {
-    return agent.soulName || agent.personality || null;
+    return agent.identityName || null;
   };
 
   return (
@@ -85,17 +85,17 @@ export const FleetSidebar = ({
       className={`glass-panel fade-up-delay ui-panel ui-depth-sidepanel relative flex h-full flex-1 flex-col gap-3 bg-sidebar p-3 border-r border-sidebar-border ${className || ""}`}
       data-testid="fleet-sidebar"
     >
-      { /* Header - Centered */ }
+      {/* Header - Centered */}
       <div className="flex items-center justify-center gap-2 px-1">
         <p className="console-title type-page-title text-foreground text-center">Agents ({agents.length})</p>
       </div>
 
-      { /* Agent Grid - Responsive with larger cards */ }
+      {/* Agent Grid - Responsive with larger cards */}
       <div ref={scrollContainerRef} className="ui-scroll min-h-0 flex-1 overflow-auto">
         {agents.length === 0 ? (
           <EmptyStatePanel title="No agents available." compact className="p-3 text-xs" />
         ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3">
             {agents.map((agent) => {
               const selected = selectedAgentId === agent.agentId;
               const avatarSeed = agent.avatarSeed ?? agent.agentId;
@@ -114,14 +114,14 @@ export const FleetSidebar = ({
                   }}
                   type="button"
                   data-testid={`fleet-agent-row-${agent.agentId}`}
-                  className={`group relative ui-card flex flex-col items-center p-4 text-center border transition-colors min-h-[200px] ${
+                  className={`group relative ui-card flex flex-col items-center p-4 text-center border transition-colors min-h-[240px] ${
                     selected
                       ? "ui-card-selected ring-2 ring-primary bg-primary/5"
                       : "hover:bg-surface-2/45"
                   }`}
                   onClick={() => onSelectAgent(agent.agentId)}
                 >
-                  { /* Status Dot */ }
+                  {/* Status Dot */}
                   <span
                     aria-hidden="true"
                     className={`absolute top-3 right-3 w-3 h-3 rounded-full border-2 border-background ${
@@ -132,7 +132,7 @@ export const FleetSidebar = ({
                     }`}
                   />
                   
-                  { /* Avatar - Square */ }
+                  {/* Avatar - Square */}
                   <div className="relative mb-3">
                     <AgentAvatar
                       seed={avatarSeed}
@@ -143,20 +143,20 @@ export const FleetSidebar = ({
                     />
                   </div>
                   
-                  { /* Soul Name (if exists) - ABOVE agent name */ }
+                  {/* Soul Name (if exists) - ABOVE agent name */}
                   {soulName && (
-                    <div className="flex items-center justify-center gap-1 text-[11px] text-primary font-medium truncate w-full mb-1">
-                      <Ghost className="w-3 h-3" />
-                      <span className="truncate max-w-[140px]">{soulName}</span>
+                    <div className="flex items-center justify-center gap-1 text-[13px] text-primary font-semibold truncate w-full mb-2">
+                      <Ghost className="w-3.5 h-3.5" />
+                      <span className="truncate max-w-[160px]">{soulName}</span>
                     </div>
                   )}
                   
-                  { /* Agent Name */ }
+                  {/* Agent Name */}
                   <p className="font-semibold text-foreground text-base truncate w-full mb-1">
                     {agent.name}
                   </p>
                   
-                  { /* Model & Status - Push to bottom */ }
+                  {/* Model & Status - Push to bottom */}
                   <div className="flex items-center justify-center gap-2 mt-auto w-full">
                     <span className="flex items-center gap-1 text-[10px] text-muted-foreground bg-surface-2 px-2 py-1 rounded-md">
                       <Cpu className="w-3 h-3" />
@@ -167,7 +167,7 @@ export const FleetSidebar = ({
                     </span>
                   </div>
                   
-                  { /* Approval Badge */ }
+                  {/* Approval Badge */}
                   {agent.awaitingUserInput ? (
                     <span className={`absolute bottom-3 left-3 right-3 text-[10px] ${NEEDS_APPROVAL_BADGE_CLASS} py-1 rounded-md`} data-status="approval">
                       Needs Approval
@@ -180,7 +180,7 @@ export const FleetSidebar = ({
         )}
       </div>
 
-      { /* New Agent Button - Centered, 1/3 width */ }
+      {/* New Agent Button - Centered, 1/3 width */}
       <div className="flex justify-center w-full mt-auto px-4">
         <button
           type="button"

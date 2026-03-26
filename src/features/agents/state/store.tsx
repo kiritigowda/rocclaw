@@ -25,6 +25,7 @@ export type FocusFilter = "all" | "running" | "approvals";
 export type AgentStoreSeed = {
   agentId: string;
   name: string;
+  identityName?: string | null;
   sessionKey: string;
   avatarSeed?: string | null;
   avatarUrl?: string | null;
