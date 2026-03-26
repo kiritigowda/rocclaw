@@ -80,11 +80,6 @@ export const FleetSidebar = ({
     return agent.identityName || null;
   };
 
-  // Get identity emoji
-  const getIdentityEmoji = (agent: AgentState) => {
-    return agent.identityEmoji || null;
-  };
-
   return (
     <aside
       className={`glass-panel fade-up-delay ui-panel ui-depth-sidepanel relative flex h-full flex-1 flex-col gap-3 bg-sidebar p-3 border-r border-sidebar-border ${className || ""}`}
@@ -106,7 +101,6 @@ export const FleetSidebar = ({
               const avatarSeed = agent.avatarSeed ?? agent.agentId;
               const modelName = getModelName(agent);
               const soulName = getSoulName(agent);
-              const identityEmoji = getIdentityEmoji(agent);
               
               return (
                 <button
@@ -149,10 +143,10 @@ export const FleetSidebar = ({
                     />
                   </div>
                   
-                  {/* Identity Name (Soul Name) with Emoji - PRIMARY, BOLD, FIRST */}
+                  {/* Identity Name - PRIMARY, BOLD, FIRST (no emoji) */}
                   {soulName ? (
                     <p className="font-bold text-primary text-lg truncate w-full mb-1">
-                      {identityEmoji ? `${identityEmoji} ${soulName}` : soulName}
+                      {soulName}
                     </p>
                   ) : (
                     <p className="font-bold text-primary text-lg truncate w-full mb-1">
@@ -160,14 +154,9 @@ export const FleetSidebar = ({
                     </p>
                   )}
                   
-                  {/* Agent Name (the "edited" name like Developer, Scout) - below identity */}
-                  <p className="font-semibold text-foreground text-base truncate w-full mb-1">
+                  {/* Agent Name - below identity */}
+                  <p className="font-semibold text-foreground text-base truncate w-full mb-2">
                     {agent.name}
-                  </p>
-                  
-                  {/* Agent ID - below agent name */}
-                  <p className="text-xs text-muted-foreground truncate w-full mb-2">
-                    ID: {agent.agentId}
                   </p>
                   
                   {/* Model & Status - Push to bottom */}
