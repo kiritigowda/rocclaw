@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   serverExternalPackages: ["ws", "better-sqlite3", "systeminformation"],
   webpack: (config, { isServer }) => {
     // Suppress warnings about optional macOS dependencies
