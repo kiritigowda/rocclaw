@@ -7,6 +7,7 @@ import {
   resolveAgentStatusLabel,
 } from "./colorSemantics";
 import { EmptyStatePanel } from "./EmptyStatePanel";
+import { Plus } from "lucide-react";
 
 type FleetSidebarProps = {
   agents: AgentState[];
@@ -19,17 +20,9 @@ type FleetSidebarProps = {
   createBusy?: boolean;
 };
 
-const FILTER_OPTIONS: Array<{ value: FocusFilter; label: string; testId: string }> = [
-  { value: "all", label: "All", testId: "fleet-filter-all" },
-  { value: "running", label: "Running", testId: "fleet-filter-running" },
-  { value: "approvals", label: "Approvals", testId: "fleet-filter-approvals" },
-];
-
 export const FleetSidebar = ({
   agents,
   selectedAgentId,
-  filter,
-  onFilterChange,
   onSelectAgent,
   onCreateAgent,
   createDisabled = false,
@@ -75,43 +68,17 @@ export const FleetSidebar = ({
       className={`glass-panel fade-up-delay ui-panel ui-depth-sidepanel relative flex h-full flex-1 flex-col gap-3 bg-sidebar p-3 border-r border-sidebar-border ${className || ""}`}
       data-testid="fleet-sidebar"
     >
+      { /* Header */ }
       <div className="flex items-center justify-between gap-2 px-1">
         <p className="console-title type-page-title text-foreground">Agents ({agents.length})</p>
-        <button
-          type="button"
-          data-testid="fleet-new-agent-button"
-          className="ui-btn-primary px-3 py-2 font-mono text-[12px] font-medium tracking-[0.02em] disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground"
-          onClick={onCreateAgent}
-          disabled={createDisabled || createBusy}
-        >
-          {createBusy ? "Creating..." : "New agent"}
-        </button>
       </div>
 
-      <div className="ui-segment ui-segment-fleet-filter grid-cols-3">
-        {FILTER_OPTIONS.map((option) => {
-          const active = filter === option.value;
-          return (
-            <button
-              key={option.value}
-              type="button"
-              data-testid={option.testId}
-              aria-pressed={active}
-              className="ui-segment-item px-2 py-1 font-mono text-[12px] font-medium tracking-[0.02em]"
-              data-active={active ? "true" : "false"}
-              onClick={() => onFilterChange(option.value)}
-            >
-              {option.label}
-            </button>
-          );
-        })}
-      </div>
-
+      { /* Agent Grid - 2 columns */ }
       <div ref={scrollContainerRef} className="ui-scroll min-h-0 flex-1 overflow-auto">
         {agents.length === 0 ? (
           <EmptyStatePanel title="No agents available." compact className="p-3 text-xs" />
         ) : (
-          <div className="flex flex-col gap-2.5">
+          <div className="grid grid-cols-2 gap-2">
             {agents.map((agent) => {
               const selected = selectedAgentId === agent.agentId;
               const avatarSeed = agent.avatarSeed ?? agent.agentId;
@@ -127,7 +94,7 @@ export const FleetSidebar = ({
                   }}
                   type="button"
                   data-testid={`fleet-agent-row-${agent.agentId}`}
-                  className={`group relative ui-card flex w-full items-center gap-3 overflow-hidden border px-3 py-3 text-left transition-colors ${
+                  className={`group relative ui-card flex flex-col items-center justify-center gap-2 p-3 text-center border transition-colors aspect-square ${
                     selected
                       ? "ui-card-selected"
                       : "hover:bg-surface-2/45"
@@ -136,32 +103,33 @@ export const FleetSidebar = ({
                 >
                   <span
                     aria-hidden="true"
-                    className={`ui-card-select-indicator ${selected ? "opacity-100" : "opacity-0 group-hover:opacity-35"}`}
+                    className={`absolute top-2 right-2 w-2 h-2 rounded-full ${
+                      agent.status === "running" ? "bg-green-500" :
+                      agent.status === "error" ? "bg-red-500" :
+                      agent.status === "idle" ? "bg-slate-400" :
+                      "bg-amber-500"
+                    }`}
                   />
                   <AgentAvatar
                     seed={avatarSeed}
                     name={agent.name}
                     avatarUrl={agent.avatarUrl ?? null}
-                    size={42}
+                    size={48}
                     isSelected={selected}
                   />
-                  <div className="min-w-0 flex-1">
-                    <p className="type-secondary-heading truncate text-foreground">
+                  <div className="min-w-0 w-full">
+                    <p className="type-secondary-heading truncate text-foreground text-sm">
                       {agent.name}
-                    </p>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                      <span
-                        className={`ui-badge ${resolveAgentStatusBadgeClass(agent.status)}`}
-                        data-status={agent.status}
-                      >
+                    </p>                    
+                    {agent.awaitingUserInput ? (
+                      <span className={`ui-badge ${NEEDS_APPROVAL_BADGE_CLASS} text-[10px] mt-1`} data-status="approval">
+                        Needs approval
+                      </span>
+                    ) : (
+                      <span className={`text-[10px] text-muted-foreground mt-1 ${resolveAgentStatusBadgeClass(agent.status)}`}>
                         {resolveAgentStatusLabel(agent.status)}
                       </span>
-                      {agent.awaitingUserInput ? (
-                        <span className={`ui-badge ${NEEDS_APPROVAL_BADGE_CLASS}`} data-status="approval">
-                          Needs approval
-                        </span>
-                      ) : null}
-                    </div>
+                    )}
                   </div>
                 </button>
               );
@@ -169,6 +137,18 @@ export const FleetSidebar = ({
           </div>
         )}
       </div>
+
+      { /* New Agent Button - Bottom */ }
+      <button
+        type="button"
+        data-testid="fleet-new-agent-button"
+        className="ui-btn-primary flex items-center justify-center gap-2 px-3 py-3 font-mono text-[12px] font-medium tracking-[0.02em] disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground mt-auto"
+        onClick={onCreateAgent}
+        disabled={createDisabled || createBusy}
+      >
+        <Plus className="w-4 h-4" />
+        {createBusy ? "Creating..." : "New Agent"}
+      </button>
     </aside>
   );
 };
