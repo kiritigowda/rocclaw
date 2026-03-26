@@ -77,7 +77,16 @@ export const FleetSidebar = ({
 
   // Get soul name from agent identity
   const getSoulName = (agent: AgentState) => {
-    return agent.identityName || null;
+    // DEBUG: Force identity names based on agent ID
+    const forcedNames: Record<string, string> = {
+      developer: "Kapu",
+      main: "Simon", 
+      work: "Miaman",
+      coding: "Ahan",
+      social: "Salma",
+      "new-agent": "Debbie"
+    };
+    return forcedNames[agent.agentId] || agent.identityName || null;
   };
 
   return (
