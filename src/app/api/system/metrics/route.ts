@@ -99,11 +99,11 @@ export async function GET(
       .filter(gpu => gpu.model || gpu.vendor)
       .map(gpu => ({
         name: gpu.model || gpu.vendor || 'Unknown GPU',
-        usage: gpu.utilizationGpu !== null ? Math.round(gpu.utilizationGpu) : null,
-        temperature: gpu.temperatureGpu !== null ? Math.round(gpu.temperatureGpu) : null,
+        usage: gpu.utilizationGpu !== null ? Math.round(gpu.utilizationGpu ?? 0) : null,
+        temperature: gpu.temperatureGpu !== null ? Math.round(gpu.temperatureGpu ?? 0) : null,
         memory: {
-          total: gpu.memoryTotal !== null ? Math.round(gpu.memoryTotal) : null,
-          used: gpu.memoryUsed !== null ? Math.round(gpu.memoryUsed) : null,
+          total: gpu.memoryTotal !== null ? Math.round(gpu.memoryTotal ?? 0) : null,
+          used: gpu.memoryUsed !== null ? Math.round(gpu.memoryUsed ?? 0) : null,
         },
       }));
 
@@ -116,7 +116,7 @@ export async function GET(
         usage: cpuUsage,
         cores: cpuData.cpus.length,
         temperature: cpuTemp.main !== null ? Math.round(cpuTemp.main) : null,
-        speed: Math.round(cpuData.cpus[0]?.speed || 0),
+        speed: cpuInfo.speed || 0,
         loadAvg: cpuData.avgLoad 
           ? [cpuData.avgLoad, cpuData.avgLoad * 0.9, cpuData.avgLoad * 0.85]
           : [0, 0, 0],
@@ -124,11 +124,11 @@ export async function GET(
       memory: {
         total: Math.round(memData.total / (1024 * 1024 * 1024) * 100) / 100,
         used: Math.round(memData.used / (1024 * 1024 * 1024) * 100) / 100,
-        free: Math.round(memData.free / (1024 * 1024 * 1024) * 100) / 100,
+        free: Math.round((memData.free || 0) / (1024 * 1024 * 1024) * 100) / 100,
         usage: memUsage,
-        swapTotal: Math.round(memData.swaptotal / (1024 * 1024 * 1024) * 100) / 100,
-        swapUsed: Math.round(memData.swapused / (1024 * 1024 * 1024) * 100) / 100,
-        swapFree: Math.round((memData.swaptotal - memData.swapused) / (1024 * 1024 * 1024) * 100) / 100,
+        swapTotal: Math.round((memData.swaptotal || 0) / (1024 * 1024 * 1024) * 100) / 100,
+        swapUsed: Math.round((memData.swapused || 0) / (1024 * 1024 * 1024) * 100) / 100,
+        swapFree: Math.round(((memData.swaptotal || 0) - (memData.swapused || 0)) / (1024 * 1024 * 1024) * 100) / 100,
       },
       disk: rootDisk ? {
         total: Math.round(rootDisk.size / (1024 * 1024 * 1024) * 100) / 100,
