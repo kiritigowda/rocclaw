@@ -1,177 +1,135 @@
-![Home screen](home-screen.png)
+# rocCLAW
 
-# OpenClaw Studio
+A focused operator studio for OpenClaw. Connect to your Gateway, manage agents, view system metrics, and control your AI operations from one clean interface.
 
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/EFkFHbZw)
 
-OpenClaw Studio is a clean web dashboard for OpenClaw. Use it to connect to your Gateway, see your agents, chat, manage approvals, and configure jobs from one place.
+## Features
 
-⭐ Drop a star to help us grow! ⭐ 
+- **Agent Management** - Create, configure, and monitor your AI agents
+- **Identity Display** - Each agent shows their unique identity name (e.g., Kapu, Simon, Debbie)
+- **System Metrics** - Real-time CPU, memory, GPU, disk, and network monitoring
+- **Tabbed Interface** - Clean layout with Agents and System Metrics tabs (Chat, Tokens, Settings available on demand)
+- **Custom Branding** - Personalized logo support
 
-It helps more developers discover the project.
+## Quick Start
 
-## Get Started (Pick Your Setup)
-
-If your Gateway is already running, pick the scenario that matches where your Gateway and Studio will run:
-
-- [A. Gateway local, Studio local (same computer)](#a-gateway-local-studio-local-same-computer)
-- [B. Gateway in the cloud, Studio local (your laptop)](#b-gateway-in-the-cloud-studio-local-your-laptop)
-- [C. Studio in the cloud, Gateway in the cloud](#c-studio-in-the-cloud-gateway-in-the-cloud)
-
-All setups use the same install/run path (recommended): `npx -y openclaw-studio@latest`
-
-Two links matter:
-
-1. Browser -> Studio
-2. Studio -> Gateway
-
-`localhost` always means "the Studio host." If Studio and OpenClaw share a machine, the upstream should usually stay at `ws://localhost:18789` even when that machine is a cloud VM.
-
-## Requirements
-
+### Requirements
 - Node.js 20.9+ (LTS recommended)
-- An OpenClaw Gateway URL + token, or a local OpenClaw install Studio can detect
-- Tailscale (optional, recommended for remote access)
+- OpenClaw Gateway URL + token
+- Tailscale (optional, for remote access)
 
-## A) Gateway local, Studio local (same computer)
-
-```bash
-npx -y openclaw-studio@latest
-cd openclaw-studio
-npm run dev
-```
-
-1. Open http://localhost:3000
-2. In Studio, set:
-   - Upstream URL: `ws://localhost:18789`
-   - Upstream Token: your gateway token (for example: `openclaw config get gateway.auth.token`)
-
-## B) Gateway in the cloud, Studio local (your laptop)
-
-Run Studio on your laptop as above, then set an upstream URL your laptop can reach.
-
-Recommended (Tailscale Serve on the gateway host):
-
-1. On the gateway host:
-   - `tailscale serve --yes --bg --https 443 http://127.0.0.1:18789`
-2. In Studio (on your laptop):
-   - Upstream URL: `wss://<gateway-host>.ts.net`
-   - Upstream Token: your gateway token
-3. Keep in mind:
-   - Studio still needs a gateway token here, even if the OpenClaw Control UI can use Tailscale identity headers
-   - Raw `ws://<private-ip>:18789` is an advanced/manual path and may need extra OpenClaw origin configuration
-
-Alternative (SSH tunnel):
-
-1. From your laptop:
-   - `ssh -L 18789:127.0.0.1:18789 user@<gateway-host>`
-2. In Studio:
-   - Upstream URL: `ws://localhost:18789`
-
-## C) Studio in the cloud, Gateway in the cloud
-
-This is the “always-on” setup. When Studio and OpenClaw run on the same cloud VM, keep the OpenClaw upstream local and solve browser access to Studio separately.
-
-1. On the VPS that will run Studio:
-   - Run Studio (same commands as above).
-2. If OpenClaw is on that same VPS, keep Studio's upstream set to:
-   - Upstream URL: `ws://localhost:18789`
-   - Upstream Token: your gateway token
-3. Expose Studio over tailnet HTTPS:
-   - `tailscale serve --yes --bg --https 443 http://127.0.0.1:3000`
-4. Open Studio from your laptop/phone:
-   - `https://<studio-host>.ts.net`
-5. Only use a remote upstream like `wss://<gateway-host>.ts.net` if Studio and OpenClaw are on different machines.
-
-Notes:
-- Avoid serving Studio behind `/studio` unless you configure `basePath` and rebuild.
-- If Studio is reachable beyond loopback, `STUDIO_ACCESS_TOKEN` is required.
-- If you bind Studio beyond loopback, open `/?access_token=...` once from each new browser to set the Studio cookie.
-
-## How It Connects (Mental Model)
-
-OpenClaw Studio now runs one runtime architecture with **two primary paths**:
-
-1. Browser -> Studio: HTTP + SSE (`/api/runtime/*`, `/api/intents/*`, `/api/runtime/stream`)
-2. Studio -> Gateway (upstream): one server-owned WebSocket opened by the Studio Node process
-
-This is why `ws://localhost:18789` means “gateway on the Studio host”, not “gateway on your phone”.
-
-If Studio is running on a remote machine over SSH and the terminal says `Open in browser: http://localhost:3000`, that `localhost` is the remote machine. Use Tailscale Serve or an SSH tunnel to open Studio from your own laptop.
-
-## Install from source (advanced)
+### Run Locally
 
 ```bash
-git clone https://github.com/grp06/openclaw-studio.git
-cd openclaw-studio
+# Clone the repository
+git clone https://github.com/simonCatBot/rocclaw.git
+cd rocclaw
+
+# Install dependencies
 npm install
+
+# Start development server
 npm run dev
 ```
 
-Optional setup helper in a source checkout:
+Open http://localhost:3000
 
-```bash
-npm run studio:setup
+### Connect to Gateway
+
+1. Set **Upstream URL**: `ws://localhost:18789` (or your gateway URL)
+2. Set **Upstream Token**: Get from `openclaw config get gateway.auth.token`
+3. Click **Connect**
+
+## Setup Scenarios
+
+### Local Development
+Both Gateway and rocCLAW running on the same machine:
+```
+Upstream URL: ws://localhost:18789
 ```
 
-That writes the saved gateway URL/token for this Studio host without opening the UI first.
+### Remote Gateway
+Gateway on a cloud VM, rocCLAW on your laptop:
+
+**With Tailscale:**
+```
+Upstream URL: wss://<gateway-host>.ts.net
+```
+
+**With SSH Tunnel:**
+```bash
+ssh -L 18789:127.0.0.1:18789 user@<gateway-host>
+```
+Then use `ws://localhost:18789`
 
 ## Configuration
 
-Paths and key settings:
-- OpenClaw config: `~/.openclaw/openclaw.json` (or via `OPENCLAW_STATE_DIR`)
-- Studio settings: `~/.openclaw/openclaw-studio/settings.json`
-- Control-plane runtime DB: `~/.openclaw/openclaw-studio/runtime.db`
-- Default gateway URL: `ws://localhost:18789` (override via Studio Settings or `NEXT_PUBLIC_GATEWAY_URL`)
-- Domain API mode: always enabled. Studio runs on the server-owned control-plane architecture.
-- `STUDIO_ACCESS_TOKEN`: required when binding Studio to a public host (`HOST=0.0.0.0`, `HOST=::`, or non-loopback hostnames/IPs); optional for loopback-only binds (`127.0.0.1`, `::1`, `localhost`)
+| Setting | Default | Description |
+|---------|---------|-------------|
+| Upstream URL | `ws://localhost:18789` | OpenClaw Gateway WebSocket URL |
+| Upstream Token | - | Gateway authentication token |
+| ROCCLAW_ACCESS_TOKEN | - | Required when binding to public host |
 
-Startup guard behavior:
-- `npm run dev` and `npm run dev:turbo` run `verify:native-runtime:repair` before server startup.
-- `npm run start` runs `verify:native-runtime:check` before startup (check-only; no dependency mutation).
+### File Locations
 
-Why SQLite exists now:
-- Studio’s server-owned control plane stores durable runtime projection + replay outbox in `runtime.db`.
-- This keeps runtime history and SSE replay deterministic across page refreshes and process restarts.
+- OpenClaw config: `~/.openclaw/openclaw.json`
+- rocCLAW settings: `~/.openclaw/rocclaw/settings.json`
+- Runtime database: `~/.openclaw/rocclaw/runtime.db`
 
-## UI guide
+## Development
 
-See `docs/ui-guide.md` for UI workflows (agent creation, cron jobs, exec approvals).
+### Scripts
 
-## PI + chat streaming
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run test         # Run tests
+npm run lint         # Run ESLint
+```
 
-See `docs/pi-chat-streaming.md` for how Studio streams runtime events over domain SSE (`/api/runtime/stream`), applies replay/history, and renders tool calls, thinking traces, and final transcript lines.
+### Project Structure
 
-## Permissions + sandboxing
+```
+rocclaw/
+├── src/              # Source code
+│   ├── features/     # Feature modules (agents, system)
+│   ├── components/   # Shared components
+│   └── lib/          # Utilities and helpers
+├── public/           # Static assets (logo, favicon)
+├── docs/             # Documentation
+├── tests/            # Test files
+└── server/           # Server runtime
+```
 
-See `docs/permissions-sandboxing.md` for how agent creation choices (tool policy, sandbox config, exec approvals) flow from Studio into the OpenClaw Gateway and how upstream OpenClaw enforces them at runtime (workspaces, sandbox mounts, tool availability, and exec approval prompts).
+## Documentation
 
-## Color system
-
-See `docs/color-system.md` for the semantic color contract, status mappings, and guardrails that keep action/status/danger usage consistent across the UI.
+- [UI Guide](docs/ui-guide.md) - Agent creation, cron jobs, approvals
+- [Chat Streaming](docs/pi-chat-streaming.md) - Runtime event streaming
+- [Permissions](docs/permissions-sandboxing.md) - Security and sandboxing
+- [Color System](docs/color-system.md) - UI design tokens
+- [Architecture](ARCHITECTURE.md) - Technical architecture
 
 ## Troubleshooting
 
-If the UI loads but “Connect” fails, it’s usually Studio->Gateway:
-- Confirm the upstream URL/token in the UI (stored on the Studio host at `<state dir>/openclaw-studio/settings.json`).
-- If Studio is on a remote host, remember that `ws://localhost:18789` means "OpenClaw on the Studio host," not "OpenClaw on your laptop."
-- If Studio is on a remote host and you cannot open `http://localhost:3000` from your laptop, expose Studio with `tailscale serve --yes --bg --https 443 http://127.0.0.1:3000` or use `ssh -L 3000:127.0.0.1:3000 user@host`.
-- `EPROTO` / “wrong version number”: you used `wss://...` to a non-TLS endpoint (use `ws://...`, or put the gateway behind HTTPS).
-- `.ts.net` + `ws://`: use `wss://` instead.
-- Assets 404 under `/studio`: serve Studio at `/` or configure `basePath` and rebuild.
-- 401 “Studio access token required”: `STUDIO_ACCESS_TOKEN` is enabled; open `/?access_token=...` once to set the cookie.
-- Helpful error codes: `studio.gateway_url_missing`, `studio.gateway_token_missing`, `studio.upstream_error`, `studio.upstream_closed`.
+### Connection Issues
+- **"Connect" fails**: Verify upstream URL/token in settings
+- **EPROTO error**: Use `ws://` for non-TLS, `wss://` for TLS endpoints
+- **401 Unauthorized**: Set `ROCCLAW_ACCESS_TOKEN` when binding to public host
 
-If startup fails with `better_sqlite3.node` / `NODE_MODULE_VERSION` mismatch:
-- Run `npm run verify:native-runtime:repair`
-- Confirm `node` and `npm` point at the same runtime before launching Studio:
-  - `node -v && node -p "process.versions.modules"`
-  - `which node && which npm`
-  - If they differ (for example Homebrew `npm` + `nvm` `node`), run `nvm use` in that terminal first.
-- If it still fails, run:
-  - `npm rebuild better-sqlite3`
-  - `npm install`
+### Runtime Issues
+- **SQLite errors**: Run `npm run verify:native-runtime:repair`
+- **Node version mismatch**: Ensure `node` and `npm` point to same runtime
 
-## Architecture
+## Contributing
 
-See `ARCHITECTURE.md` for details on modules and data flow.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and commit conventions.
+
+## License
+
+See [LICENSE](LICENSE)
+
+---
+
+⭐ Star this repo if you find it useful!
