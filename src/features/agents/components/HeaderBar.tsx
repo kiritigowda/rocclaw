@@ -42,13 +42,13 @@ export const HeaderBar = ({
       <div className="grid h-14 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center px-3 sm:px-4 md:px-5">
         <div aria-hidden="true" />
         <div className="flex items-center justify-center">
-          <div className="relative flex h-14 w-auto items-center justify-center overflow-hidden">
+          <div className="relative flex h-20 w-auto items-center justify-center overflow-hidden">
             <Image
               src="/logo.png"
               alt="rocCLAW control"
-              width={200}
-              height={56}
-              className="h-14 w-auto object-contain"
+              width={300}
+              height={80}
+              className="h-20 w-auto object-contain"
               priority
             />
           </div>
