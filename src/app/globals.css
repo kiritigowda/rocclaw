@@ -869,14 +869,13 @@ textarea:focus::-webkit-scrollbar {
 }
 
 .ui-topbar {
-  border-bottom: 1px solid color-mix(in oklch, var(--border) 72%, transparent);
+  border: none;
   border-radius: 0;
   background: color-mix(in oklch, var(--surface-1) 96%, var(--surface-0));
   box-shadow: none;
 }
 
 .dark .ui-topbar {
-  border-bottom-color: color-mix(in oklch, var(--border) 88%, var(--surface-selected-border));
   background: color-mix(in oklch, var(--surface-1) 94%, var(--surface-0));
 }
 
