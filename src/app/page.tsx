@@ -423,25 +423,10 @@ const AgentStudioPage = () => {
     settingsHeaderThinkingRaw.charAt(0).toUpperCase() + settingsHeaderThinkingRaw.slice(1);
 
   useEffect(() => {
-    const selector = 'link[data-agent-favicon="true"]';
-    const existing = document.querySelector(selector) as HTMLLinkElement | null;
-    if (!faviconHref) {
-      existing?.remove();
-      return;
-    }
-    if (existing) {
-      if (existing.href !== faviconHref) {
-        existing.href = faviconHref;
-      }
-      return;
-    }
-    const link = document.createElement("link");
-    link.rel = "icon";
-    link.type = "image/svg+xml";
-    link.href = faviconHref;
-    link.setAttribute("data-agent-favicon", "true");
-    document.head.appendChild(link);
-  }, [faviconHref]);
+    // Keep the static logo.png favicon, don't change it dynamically
+    // The favicon is set in layout.tsx and should remain consistent
+    return;
+  }, []);
 
 
   const resolveCronJobForAgent = useCallback((jobs: CronJobSummary[], agentId: string) => {

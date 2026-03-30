@@ -38,7 +38,7 @@ export const HeaderBar = ({
   }, [menuOpen]);
 
   return (
-    <div className="ui-topbar relative z-[180]">
+    <div className="ui-topbar border-none relative z-[180]">
       <div className="grid h-24 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center px-3 sm:px-4 md:px-5">
         <div aria-hidden="true" />
         <div className="flex items-center justify-center">
