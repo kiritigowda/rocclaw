@@ -45,7 +45,7 @@ import {
   readConfigAgentList,
   slugifyAgentName,
 } from "@/lib/gateway/agentConfig";
-import { buildAvatarDataUrl } from "@/lib/avatars/multiavatar";
+import { randomUUID } from "@/lib/uuid";
 import { createStudioSettingsCoordinator } from "@/lib/rocclaw/coordinator";
 import { applySessionSettingMutation } from "@/features/agents/state/sessionSettingsMutations";
 import type { AgentCreateModalSubmitPayload } from "@/features/agents/creation/types";
@@ -390,15 +390,6 @@ const AgentStudioPage = () => {
       return "New Agent";
     }
   }, [state.agents]);
-  const faviconSeed = useMemo(() => {
-    const firstAgent = agents[0];
-    const seed = firstAgent?.avatarSeed ?? firstAgent?.agentId ?? "";
-    return seed.trim() || null;
-  }, [agents]);
-  const faviconHref = useMemo(
-    () => (faviconSeed ? buildAvatarDataUrl(faviconSeed) : null),
-    [faviconSeed]
-  );
   const errorMessage = state.error ?? gatewayError ?? gatewayModelsError;
   const studioCliUpdateWarning = useMemo(() => {
     const studioCli = installContext.studioCli;
@@ -421,13 +412,6 @@ const AgentStudioPage = () => {
   const settingsHeaderThinkingRaw = (inspectSidebarAgent?.thinkingLevel ?? "").trim() || "low";
   const settingsHeaderThinking =
     settingsHeaderThinkingRaw.charAt(0).toUpperCase() + settingsHeaderThinkingRaw.slice(1);
-
-  useEffect(() => {
-    // Keep the static logo.png favicon, don't change it dynamically
-    // The favicon is set in layout.tsx and should remain consistent
-    return;
-  }, []);
-
 
   const resolveCronJobForAgent = useCallback((jobs: CronJobSummary[], agentId: string) => {
     return resolveLatestCronJobForAgent(jobs, agentId);
