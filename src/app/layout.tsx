@@ -5,6 +5,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "rocCLAW control",
   description: "Focused operator studio for the OpenClaw gateway.",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 const display = Bebas_Neue({

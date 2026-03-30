@@ -13,7 +13,6 @@ import { HeaderBar } from "@/features/agents/components/HeaderBar";
 import { ConnectionPanel } from "@/features/agents/components/ConnectionPanel";
 import { GatewayConnectScreen } from "@/features/agents/components/GatewayConnectScreen";
 import { EmptyStatePanel } from "@/features/agents/components/EmptyStatePanel";
-import { SystemDashboard } from "@/components/SystemDashboard";
 import { SystemMetricsDashboard } from "@/components/SystemMetricsDashboard";
 import { TokenUsageDashboard } from "@/components/TokenUsageDashboard";
 import { TabBar, type TabId, getDefaultActiveTabs } from "@/components/TabBar";
@@ -46,7 +45,7 @@ import {
   readConfigAgentList,
   slugifyAgentName,
 } from "@/lib/gateway/agentConfig";
-import { buildAvatarDataUrl } from "@/lib/avatars/multiavatar";
+import { randomUUID } from "@/lib/uuid";
 import { createStudioSettingsCoordinator } from "@/lib/rocclaw/coordinator";
 import { applySessionSettingMutation } from "@/features/agents/state/sessionSettingsMutations";
 import type { AgentCreateModalSubmitPayload } from "@/features/agents/creation/types";
@@ -60,7 +59,6 @@ import {
 } from "@/features/agents/operations/useConfigMutationQueue";
 import { useGatewayConfigSyncController } from "@/features/agents/operations/useGatewayConfigSyncController";
 import { isLocalGatewayUrl } from "@/lib/gateway/local-gateway";
-import { randomUUID } from "@/lib/uuid";
 import type { ExecApprovalDecision, PendingExecApproval } from "@/features/agents/approvals/types";
 import {
   planAwaitingUserInputPatches,
@@ -391,15 +389,6 @@ const AgentStudioPage = () => {
       return "New Agent";
     }
   }, [state.agents]);
-  const faviconSeed = useMemo(() => {
-    const firstAgent = agents[0];
-    const seed = firstAgent?.avatarSeed ?? firstAgent?.agentId ?? "";
-    return seed.trim() || null;
-  }, [agents]);
-  const faviconHref = useMemo(
-    () => (faviconSeed ? buildAvatarDataUrl(faviconSeed) : null),
-    [faviconSeed]
-  );
   const errorMessage = state.error ?? gatewayError ?? gatewayModelsError;
   const studioCliUpdateWarning = useMemo(() => {
     const studioCli = installContext.studioCli;
@@ -422,28 +411,6 @@ const AgentStudioPage = () => {
   const settingsHeaderThinkingRaw = (inspectSidebarAgent?.thinkingLevel ?? "").trim() || "low";
   const settingsHeaderThinking =
     settingsHeaderThinkingRaw.charAt(0).toUpperCase() + settingsHeaderThinkingRaw.slice(1);
-
-  useEffect(() => {
-    const selector = 'link[data-agent-favicon="true"]';
-    const existing = document.querySelector(selector) as HTMLLinkElement | null;
-    if (!faviconHref) {
-      existing?.remove();
-      return;
-    }
-    if (existing) {
-      if (existing.href !== faviconHref) {
-        existing.href = faviconHref;
-      }
-      return;
-    }
-    const link = document.createElement("link");
-    link.rel = "icon";
-    link.type = "image/svg+xml";
-    link.href = faviconHref;
-    link.setAttribute("data-agent-favicon", "true");
-    document.head.appendChild(link);
-  }, [faviconHref]);
-
 
   const resolveCronJobForAgent = useCallback((jobs: CronJobSummary[], agentId: string) => {
     return resolveLatestCronJobForAgent(jobs, agentId);
@@ -1052,6 +1019,7 @@ const AgentStudioPage = () => {
       refreshGatewayConfigSnapshot,
       runtimeWriteTransport,
       setError,
+      setMobilePaneChat,
       gatewayConnectionStatus,
     ]
   );
