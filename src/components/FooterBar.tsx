@@ -1,13 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { useAgentStore } from "@/features/agents/state/store";
 import { buildAvatarDataUrl } from "@/lib/avatars/multiavatar";
 import { resolveGatewayStatusLabel } from "@/features/agents/components/colorSemantics";
 import { ColorSchemeToggle } from "@/components/ColorSchemeToggle";
 import type { GatewayStatus } from "@/lib/gateway/gateway-status";
-import { ExternalLink, Cpu, Users, Plug } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Users, Plug } from "lucide-react";
 
 function StatusDot({ status }: { status: GatewayStatus }) {
   const colorMap: Record<GatewayStatus, string> = {
@@ -26,38 +26,31 @@ function StatusDot({ status }: { status: GatewayStatus }) {
 
 interface FooterBarProps {
   status: GatewayStatus;
-  gatewayUrl: string;
+  gatewayVersion?: string | null;
   onConnectionSettings: () => void;
 }
 
-interface GatewayVersion {
-  version?: string;
-  host?: string;
-}
-
-export function FooterBar({ status, gatewayUrl, onConnectionSettings }: FooterBarProps) {
+export function FooterBar({ status, gatewayVersion: initialVersion, onConnectionSettings }: FooterBarProps) {
   const { state } = useAgentStore();
   const agents = state.agents;
-  const [gatewayVersion, setGatewayVersion] = useState<GatewayVersion | null>(null);
+  const [gatewayVersion, setGatewayVersion] = useState<string | null>(initialVersion ?? null);
 
-  // Fetch gateway version from /api/gateway-info
+  // Fetch gateway version from /api/gateway-info when connected
   useEffect(() => {
+    if (status !== "connected") return;
     const controller = new AbortController();
     fetch("/api/gateway-info", { signal: controller.signal })
       .then((res) => res.json())
       .then((data) => {
-        if (data.connected && data.presence) {
-          setGatewayVersion({
-            version: data.presence.version,
-            host: data.presence.host,
-          });
+        if (data.connected && data.presence?.version) {
+          setGatewayVersion(data.presence.version);
         }
       })
       .catch(() => {
-        // Silently ignore - version fetch is best-effort
+        // Best-effort — leave existing value
       });
     return () => controller.abort();
-  }, []);
+  }, [status]);
 
   const agentCount = agents.length;
   const runningCount = agents.filter((a) => a.status === "running").length;
@@ -65,13 +58,25 @@ export function FooterBar({ status, gatewayUrl, onConnectionSettings }: FooterBa
 
   return (
     <footer className="grid h-auto grid-cols-[1fr_auto_1fr] items-center border-t border-border/60 bg-surface-1/70 px-5 py-3 text-xs text-muted-foreground">
-      {/* Left — connection + agents */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <StatusDot status={status} />
-          <span className="font-medium">{resolveGatewayStatusLabel(status)}</span>
-        </div>
-        <div className="h-4 w-px bg-border/60" />
+      {/* Left — connection status + version */}
+      <div className="flex items-center gap-2">
+        <StatusDot status={status} />
+        <span className="font-medium">{resolveGatewayStatusLabel(status)}</span>
+        {gatewayVersion && (
+          <>
+            <div className="h-4 w-px bg-border/60" />
+            <span className="whitespace-nowrap font-mono text-muted-foreground/60">OpenClaw Version:{gatewayVersion}</span>
+          </>
+        )}
+      </div>
+
+      {/* Center — rocCLAW */}
+      <div className="flex items-center justify-center px-6">
+        <span className="whitespace-nowrap font-mono text-muted-foreground/40">rocCLAW</span>
+      </div>
+
+      {/* Right — agents + avatars + connection + theme */}
+      <div className="flex items-center justify-end gap-4">
         <div className="flex items-center gap-2">
           <Users className="h-3.5 w-3.5 shrink-0" />
           <span>
@@ -79,52 +84,28 @@ export function FooterBar({ status, gatewayUrl, onConnectionSettings }: FooterBa
             {runningCount > 0 ? ` · ${runningCount} running` : ""}
           </span>
         </div>
-        <div className="h-4 w-px bg-border/60" />
-        <div className="flex min-w-0 items-center gap-2">
-          <Cpu className="h-3.5 w-3.5 shrink-0" />
-          <span className="min-w-0 truncate font-mono">
-            {gatewayVersion?.version || gatewayUrl}
-          </span>
-          {gatewayVersion?.version && (
-            <a
-              href={gatewayUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 text-muted-foreground/40 hover:text-muted-foreground"
-              title="Open gateway"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-          )}
-        </div>
-      </div>
-
-      {/* Center — version */}
-      <div className="flex items-center justify-center px-6">
-        <span className="whitespace-nowrap font-mono text-muted-foreground/40">rocCLAW</span>
-      </div>
-
-      {/* Right — avatars + connection + theme */}
-      <div className="flex items-center justify-end gap-4">
         {runningAgents.length > 0 && (
-          <div className="flex items-center -space-x-1.5">
-            {runningAgents.map((agent) => (
-              <div
-                key={agent.agentId}
-                className="relative overflow-hidden rounded-full ring-1 ring-black/20 dark:ring-white/10"
-                title={agent.name}
-              >
-                <Image
-                  src={buildAvatarDataUrl(agent.avatarSeed ?? agent.agentId)}
-                  alt={agent.name}
-                  width={24}
-                  height={24}
-                  className="h-6 w-6"
-                  unoptimized
-                />
-              </div>
-            ))}
-          </div>
+          <>
+            <div className="h-4 w-px bg-border/60" />
+            <div className="flex items-center -space-x-1.5">
+              {runningAgents.map((agent) => (
+                <div
+                  key={agent.agentId}
+                  className="relative overflow-hidden rounded-full ring-1 ring-black/20 dark:ring-white/10"
+                  title={agent.name}
+                >
+                  <Image
+                    src={buildAvatarDataUrl(agent.avatarSeed ?? agent.agentId)}
+                    alt={agent.name}
+                    width={24}
+                    height={24}
+                    className="h-6 w-6"
+                    unoptimized
+                  />
+                </div>
+              ))}
+            </div>
+          </>
         )}
         <div className="h-4 w-px bg-border/60" />
 
