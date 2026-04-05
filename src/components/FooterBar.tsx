@@ -4,8 +4,11 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useAgentStore } from "@/features/agents/state/store";
 import { buildAvatarDataUrl } from "@/lib/avatars/multiavatar";
+import { buildDefaultAvatarUrl, deriveDefaultIndex } from "@/features/agents/components/AgentAvatar";
 import { resolveGatewayStatusLabel } from "@/features/agents/components/colorSemantics";
 import { ColorSchemeToggle } from "@/components/ColorSchemeToggle";
+import { AvatarModeToggle } from "@/components/AvatarModeToggle";
+import { useAvatarMode, type AvatarDisplayMode } from "@/components/AvatarModeContext";
 import type { GatewayStatus } from "@/lib/gateway/gateway-status";
 import { Users, Plug } from "lucide-react";
 
@@ -34,6 +37,7 @@ export function FooterBar({ status, gatewayVersion: initialVersion, onConnection
   const { state } = useAgentStore();
   const agents = state.agents;
   const [gatewayVersion, setGatewayVersion] = useState<string | null>(initialVersion ?? null);
+  const avatarMode = useAvatarMode();
 
   // Fetch gateway version from /api/gateway-info when connected
   useEffect(() => {
@@ -55,6 +59,23 @@ export function FooterBar({ status, gatewayVersion: initialVersion, onConnection
   const agentCount = agents.length;
   const runningCount = agents.filter((a) => a.status === "running").length;
   const runningAgents = agents.filter((a) => a.status === "running").slice(0, 5);
+
+  const getFooterAvatarSrc = (
+    agent: ReturnType<typeof useAgentStore>["state"]["agents"][number],
+    avatarMode: AvatarDisplayMode
+  ) => {
+    const source = agent.avatarSource;
+    // custom URL always wins if set
+    if (source === "custom" && agent.avatarUrl?.trim()) {
+      return agent.avatarUrl.trim();
+    }
+    // Use context mode
+    if (avatarMode === "default") {
+      return buildDefaultAvatarUrl(deriveDefaultIndex(agent.avatarSeed ?? agent.agentId, agent.defaultAvatarIndex ?? 0));
+    }
+    // auto
+    return buildAvatarDataUrl(agent.avatarSeed ?? agent.agentId);
+  };
 
   return (
     <footer className="grid h-auto grid-cols-[1fr_auto_1fr] items-center border-t border-border/60 bg-surface-1/70 px-5 py-3 text-xs text-muted-foreground">
@@ -95,7 +116,7 @@ export function FooterBar({ status, gatewayVersion: initialVersion, onConnection
                   title={agent.name}
                 >
                   <Image
-                    src={buildAvatarDataUrl(agent.avatarSeed ?? agent.agentId)}
+                    src={getFooterAvatarSrc(agent, avatarMode)}
                     alt={agent.name}
                     width={24}
                     height={24}
@@ -118,6 +139,11 @@ export function FooterBar({ status, gatewayVersion: initialVersion, onConnection
         >
           <Plug className="h-3.5 w-3.5" />
         </button>
+
+        <div className="h-4 w-px bg-border/60" />
+
+        {/* Avatar mode + theme — always visible, side by side */}
+        <AvatarModeToggle />
 
         <div className="h-4 w-px bg-border/60" />
 

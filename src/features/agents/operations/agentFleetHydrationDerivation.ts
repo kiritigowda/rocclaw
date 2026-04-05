@@ -1,6 +1,6 @@
 import { buildAgentMainSessionKey } from "@/lib/gateway/session-keys";
 import { resolveConfiguredModelKey, type GatewayModelPolicySnapshot } from "@/lib/gateway/models";
-import { resolveAgentAvatarSeed, type ROCclawSettings } from "@/lib/rocclaw/settings";
+import { resolveAgentAvatarSeed, resolveAgentAvatarConfig, type ROCclawSettings } from "@/lib/rocclaw/settings";
 import {
   buildSummarySnapshotPatches,
   type SummaryPreviewSnapshot,
@@ -161,12 +161,15 @@ const resolveDefaultModelForAgent = (
   return resolveConfiguredModelKey(raw, modelAliases);
 };
 
+type IdentityByAgent = Record<string, { name: string; emoji: string }>;
+
 type DeriveFleetHydrationInput = {
   gatewayUrl: string;
   configSnapshot: GatewayModelPolicySnapshot | null;
   settings: ROCclawSettings | null;
   execApprovalsSnapshot: ExecApprovalsSnapshot | null;
   agentsResult: AgentsListResult;
+  identityByAgent: IdentityByAgent;
   mainSessionByAgentId: Map<string, SessionsListEntry | null>;
   statusSummary: SummaryStatusSnapshot | null;
   previewResult: SummaryPreviewSnapshot | null;
@@ -203,8 +206,12 @@ export const deriveHydrateAgentFleetResult = (
   const seeds: AgentStoreSeed[] = input.agentsResult.agents.map((agent) => {
     const persistedSeed =
       input.settings && gatewayKey ? resolveAgentAvatarSeed(input.settings, gatewayKey, agent.id) : null;
+    const avatarConfig =
+      input.settings && gatewayKey ? resolveAgentAvatarConfig(input.settings, gatewayKey, agent.id) : null;
     const avatarSeed = persistedSeed ?? agent.id;
     const avatarUrl = resolveAgentAvatarUrl(agent);
+    const avatarSource = (avatarConfig?.source as AgentStoreSeed["avatarSource"]) ?? "auto";
+    const defaultAvatarIndex = avatarConfig?.defaultIndex ?? 0;
     const name = resolveAgentName(agent);
     const mainSession = input.mainSessionByAgentId.get(agent.id) ?? null;
     const modelProvider =
@@ -243,11 +250,13 @@ export const deriveHydrateAgentFleetResult = (
     return {
       agentId: agent.id,
       name,
-      identityName: agent.identityName || agent.identity?.name || null,
-      identityEmoji: agent.identityEmoji || agent.identity?.emoji || null,
+      identityName: input.identityByAgent[agent.id]?.name || agent.identity?.name || agent.identityName || null,
+      identityEmoji: input.identityByAgent[agent.id]?.emoji || agent.identity?.emoji || agent.identityEmoji || null,
       sessionKey: buildAgentMainSessionKey(agent.id, mainKey),
       avatarSeed,
       avatarUrl,
+      avatarSource,
+      defaultAvatarIndex,
       model,
       thinkingLevel,
       sessionExecHost: resolvedExecHost,

@@ -6,8 +6,11 @@ import {
   type SummarySnapshotPatch,
   type SummaryStatusSnapshot,
 } from "@/features/agents/state/runtimeEventBridge";
+import { fetchJson } from "@/lib/http";
 import type { AgentStoreSeed } from "@/features/agents/state/store";
 import { deriveHydrateAgentFleetResult } from "@/features/agents/operations/agentFleetHydrationDerivation";
+
+// ─── Gateway client helpers ────────────────────────────────────────────────────
 
 type GatewayClientLike = {
   call: (method: string, params: unknown) => Promise<unknown>;
@@ -27,6 +30,68 @@ const callGateway = async <T>(
   return (await invoke(method, params)) as T;
 };
 
+// ─── Fetch identity files for all agents ─────────────────────────────────────
+
+type IdentityByAgent = Record<string, { name: string; emoji: string }>;
+
+const fetchIdentityFilesForAgents = async (
+  agentIds: string[],
+  baseUrl: string,
+  parallel = 6
+): Promise<IdentityByAgent> => {
+  const results: IdentityByAgent = {};
+
+  for (let i = 0; i < agentIds.length; i += parallel) {
+    const batch = agentIds.slice(i, i + parallel);
+    const files = await Promise.all(
+      batch.map(async (agentId) => {
+        try {
+          const result = await fetchJson<{
+            ok?: boolean;
+            payload?: { file?: { missing?: unknown; content?: string } };
+            error?: string;
+          }>(
+            `${baseUrl}/api/runtime/agent-file?agentId=${encodeURIComponent(agentId)}&name=IDENTITY.md`,
+            { cache: "no-store" }
+          );
+
+          const fileRecord = result?.payload?.file;
+          const missing = fileRecord?.missing === true;
+          const content = typeof fileRecord?.content === "string" ? fileRecord.content : "";
+
+          if (missing || !content.trim()) {
+            return { agentId, name: "", emoji: "" };
+          }
+
+          const lines = content.split("\n");
+          let name = "";
+          let emoji = "";
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith("- Name:") || trimmed.startsWith("Name:")) {
+              name = trimmed.split(":", 2).slice(1).join(":").trim();
+            }
+            if (trimmed.startsWith("- Emoji:") || trimmed.startsWith("Emoji:")) {
+              emoji = trimmed.split(":", 2).slice(1).join(":").trim();
+            }
+          }
+          return { agentId, name, emoji };
+        } catch {
+          return { agentId, name: "", emoji: "" };
+        }
+      })
+    );
+
+    for (const entry of files) {
+      results[entry.agentId] = { name: entry.name, emoji: entry.emoji };
+    }
+  }
+
+  return results;
+};
+
+// ─── Result / snapshot types ───────────────────────────────────────────────────
+
 type AgentsListResult = {
   defaultId: string;
   mainKey: string;
@@ -34,6 +99,8 @@ type AgentsListResult = {
   agents: Array<{
     id: string;
     name?: string;
+    identityName?: string | null;
+    identityEmoji?: string | null;
     identity?: {
       name?: string;
       theme?: string;
@@ -78,6 +145,8 @@ type HydrateAgentFleetResult = {
 
 const SUMMARY_PREVIEW_LIMIT = 8;
 const SUMMARY_PREVIEW_MAX_CHARS = 240;
+
+// ─── Main hydration function ──────────────────────────────────────────────────
 
 export async function hydrateAgentFleetFromGateway(params: {
   client: GatewayClientLike;
@@ -129,6 +198,13 @@ export async function hydrateAgentFleetFromGateway(params: {
 
   const agentsResult = await callGateway<AgentsListResult>(params.client, "agents.list", {});
   const mainKey = agentsResult.mainKey?.trim() || "main";
+
+  // Fetch identity files for all agents in parallel
+  const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const identityByAgent = await fetchIdentityFilesForAgents(
+    agentsResult.agents.map((a) => a.id),
+    appBaseUrl
+  );
 
   const mainSessionKeyByAgent = new Map<string, SessionsListEntry | null>();
   if (agentsResult.agents.length > 0) {
@@ -194,6 +270,7 @@ export async function hydrateAgentFleetFromGateway(params: {
     settings,
     execApprovalsSnapshot,
     agentsResult,
+    identityByAgent,
     mainSessionByAgentId: mainSessionKeyByAgent,
     statusSummary,
     previewResult,

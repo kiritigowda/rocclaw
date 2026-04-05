@@ -17,6 +17,7 @@ describe("hydrateAgentFleetFromGateway", () => {
           "agent-1": "persisted-seed",
         },
       },
+      avatarSources: {},
     };
 
     const call = vi.fn(async (method: string, params: unknown) => {
@@ -135,6 +136,28 @@ describe("hydrateAgentFleetFromGateway", () => {
       throw new Error(`Unhandled method: ${method}`);
     });
 
+    // Mock fetch for /api/runtime/agent-file calls (returns identity content)
+    const fetchMock = vi.fn(async (url: string) => {
+      if (typeof url === "string" && url.includes("/api/runtime/agent-file")) {
+        const agentId = url.includes("agentId=agent-1") ? "agent-1" :
+                        url.includes("agentId=agent-2") ? "agent-2" : "unknown";
+        const contents: Record<string, string> = {
+          "agent-1": "# IDENTITY.md - Who Am I?\n\n- Name: Agent One Soul\n- Emoji: 🤖",
+          "agent-2": "# IDENTITY.md - Who Am I?\n\n- Name: Agent Two Soul\n- Emoji: 🧠",
+          "unknown": "# IDENTITY.md - Who Am I?\n\n- Name: Unknown Soul",
+        };
+        return {
+          ok: true,
+          json: async () => ({
+            ok: true,
+            payload: { file: { content: contents[agentId] || "" } },
+          }),
+        } as unknown as Response;
+      }
+      throw new Error(`Unhandled fetch: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
     const result = await hydrateAgentFleetFromGateway({
       client: { call },
       gatewayUrl,
@@ -145,7 +168,7 @@ describe("hydrateAgentFleetFromGateway", () => {
 
     expect(call).toHaveBeenCalledWith("agents.list", {});
     expect(call).toHaveBeenCalledWith("exec.approvals.get", {});
-    expect(call).toHaveBeenCalledTimes(6);
+    expect(call).toHaveBeenCalledTimes(6); // No agents.files.get calls — files fetched via HTTP
     expect(call.mock.calls.filter(([method]) => method === "sessions.list")).toHaveLength(1);
     expect(result.seeds).toHaveLength(2);
     expect(result.seeds[0]).toEqual(
@@ -253,6 +276,7 @@ describe("hydrateAgentFleetFromGateway", () => {
         gatewayAutoStart: true,
         focused: {},
         avatars: {},
+        avatarSources: {},
       }),
       isDisconnectLikeError: () => false,
     });
@@ -301,6 +325,7 @@ describe("hydrateAgentFleetFromGateway", () => {
         gatewayAutoStart: true,
         focused: {},
         avatars: {},
+        avatarSources: {},
       }),
       isDisconnectLikeError: () => false,
       logError,
@@ -349,6 +374,7 @@ describe("hydrateAgentFleetFromGateway", () => {
         gatewayAutoStart: true,
         focused: {},
         avatars: {},
+        avatarSources: {},
       }),
       isDisconnectLikeError: () => false,
     });

@@ -17,6 +17,7 @@ describe("deriveHydrateAgentFleetResult", () => {
           "agent-1": "persisted-seed",
         },
       },
+      avatarSources: {},
     };
 
     const result = deriveHydrateAgentFleetResult({
@@ -56,6 +57,7 @@ describe("deriveHydrateAgentFleetResult", () => {
           },
         ],
       },
+      identityByAgent: {},
       mainSessionByAgentId: new Map([
         [
           "agent-1",
@@ -129,6 +131,7 @@ describe("deriveHydrateAgentFleetResult", () => {
           { id: "agent-2", name: "Two", identity: {} },
         ],
       },
+      identityByAgent: {},
       mainSessionByAgentId: new Map([
         ["agent-1", { key: "agent:agent-1:main" }],
         ["agent-2", { key: "agent:agent-2:main" }],
