@@ -36,9 +36,6 @@ yarn-error.log*
 .env*
 !.env.example
 
-# vercel
-.vercel
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
@@ -50,22 +47,6 @@ test-results
 /.playwright-cli
 /output/playwright
 
-# agent state
-/.agent/*
-!/.agent/PLANS.md
-!/.agent/README.md
-!/.agent/done/
-!/.agent/done/**
-/.agent/done/**/*.md
-/.agent/local
-/.agent/execplan-pending.md
-/.agent/*.local.md
-/.agent/future-plans
+# local state
 /.openclaw
 /.claude
-
-# local issue tracker
-/.beads
-
-# bv (beads viewer) local config and caches
-.bv/
