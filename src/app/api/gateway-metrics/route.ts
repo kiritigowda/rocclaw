@@ -27,7 +27,8 @@ export interface SystemMetrics {
   cpu: {
     name: string;
     usage: number;
-    cores: number;
+    physicalCores: number;
+    logicalCores: number;
     temperature: number | null;
     speed: number;
     currentSpeedMHz: number;
@@ -220,7 +221,8 @@ async function getLocalMetrics(): Promise<SystemMetrics> {
     cpu: {
       name: cpuName,
       usage: cpuUsage,
-      cores: cpuData.cpus?.length ?? 0,
+      physicalCores: cpuInfo.physicalCores ?? 0,
+      logicalCores: cpuInfo.cores ?? 0,
       temperature: cpuTemp.main !== null ? Math.round(cpuTemp.main) : null,
       speed: Math.round((cpuInfo.speed ?? 0) * 1000),
       currentSpeedMHz: Math.round((cpuCurrentSpeed.avg ?? 0) * 1000),
@@ -307,7 +309,13 @@ async function isLocalConnection(): Promise<boolean> {
   if (!gatewayUrl) return true; // Default to local if unknown
   
   const normalized = gatewayUrl.toLowerCase().trim();
-  return normalized.includes("localhost") || normalized.includes("127.0.0.1");
+  // Check for various localhost patterns including IPv6
+  return (
+    normalized.includes("localhost") ||
+    normalized.includes("127.0.0.1") ||
+    normalized.includes("::1") ||
+    normalized.includes("0.0.0.0")
+  );
 }
 
 async function getMetricsFromGateway(
@@ -362,15 +370,33 @@ export async function GET(): Promise<NextResponse> {
   const controlPlane = bootstrap.runtime;
 
   try {
-    // Determine if we're connected to local or remote gateway by URL
-    const isLocal = await isLocalConnection();
+    // Determine if we're connected to local or remote gateway
     const presence = await getGatewayPresence(controlPlane);
-    void presence; // presence.mode kept for future use
     const gatewayHostname = presence?.host;
-
-    // Get local metrics
+    
+    // Get local metrics early — we need the hostname to compare with gateway
     const localMetrics = await getLocalMetrics();
     const localHostname = localMetrics.hostname;
+
+    // Hostname-match detection for local vs remote:
+    // The strongest signal is whether the gateway's reported hostname matches our own.
+    // - Same hostname = we're on the same machine as the gateway (local)
+    // - Different hostname = we're on a different machine (client/remote)
+    //   This correctly handles SSH tunnels where the URL is ws://localhost:18789
+    //   but the gateway is actually on a remote machine.
+    // - Cloud presence always overrides to remote.
+    // - If we can't determine the gateway hostname (no presence data), fall back to URL check.
+    const isLocalUrl = await isLocalConnection();
+    const isSameHost = !!(
+      gatewayHostname &&
+      localHostname &&
+      gatewayHostname.toLowerCase() === localHostname.toLowerCase()
+    );
+    const isCloudPresence = presence?.mode === "cloud";
+
+    // Local when: hostnames match (strong signal of same machine), OR
+    // we have no hostname data AND the URL looks local (best-guess fallback)
+    const isLocal = !isCloudPresence && (isSameHost || (!gatewayHostname && isLocalUrl));
 
     if (isLocal) {
       // Local mode: always use local systeminformation directly

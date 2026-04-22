@@ -36,6 +36,9 @@
     "package.json",
     "package-lock.json",
     "next.config.ts",
+    "start.sh",
+    "start.bat",
+    ".env.example",
     "README.md",
     "LICENSE"
   ],
@@ -73,6 +76,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
+    "recharts": "^3.8.1",
     "remark-gfm": "^4.0.1",
     "systeminformation": "^5.31.5",
     "tailwind-merge": "^3.4.0",
