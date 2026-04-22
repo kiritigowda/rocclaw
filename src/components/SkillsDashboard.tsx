@@ -392,15 +392,8 @@ function AgentSkillCard({
           unoptimized
         />
         <div className="min-w-0 flex-1">
-          {identityName && identityName !== agentName ? (
-            <>
-              <p className="truncate text-sm font-semibold text-foreground">{identityName}</p>
-              <p className="truncate text-xs text-muted-foreground">{agentName}</p>
-            </>
-          ) : (
-            <p className="truncate text-sm font-semibold text-foreground">{agentName}</p>
-          )}
-          <p className="font-mono text-[10px] text-muted-foreground">{agentId}</p>
+          <p className="truncate text-sm font-semibold text-foreground">{identityName ?? agentName}</p>
+          <p className="truncate text-xs text-muted-foreground">{agentName}</p>
         </div>
         <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500/10 px-1.5 font-mono text-[10px] font-medium text-green-400">
           {totalSkillCount}
@@ -1078,7 +1071,7 @@ export function SkillsDashboard() {
                   <AgentSkillCard
                     key={agent.agentId}
                     agentId={agent.agentId}
-                    agentName={agent.identityName ?? agent.name ?? agent.agentId}
+                    agentName={agent.name ?? agent.agentId}
                     identityName={agent.identityName}
                     avatarSeed={agent.avatarSeed}
                     footerMode={footerMode}
