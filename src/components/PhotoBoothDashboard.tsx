@@ -24,6 +24,7 @@ import {
   Clock,
   Zap,
   Layers,
+  RotateCcw,
 } from "lucide-react";
 
 // ─── Style definitions ───────────────────────────────────────────────────────
@@ -165,7 +166,12 @@ export function PhotoBoothDashboard() {
     try {
       setCameraError(null);
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+        video: {
+          width: { ideal: 1024 },
+          height: { ideal: 1024 },
+          facingMode: "user",
+          aspectRatio: { ideal: 1 },
+        },
         audio: false,
       });
       if (videoRef.current) {
@@ -196,15 +202,21 @@ export function PhotoBoothDashboard() {
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    // Use the smaller of video dimensions to create a square crop
+    const size = Math.min(video.videoWidth, video.videoHeight);
+    canvas.width = size;
+    canvas.height = size;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     // Mirror the image horizontally (selfie mode)
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0);
+
+    // Crop to center square from the video feed
+    const offsetX = (video.videoWidth - size) / 2;
+    const offsetY = (video.videoHeight - size) / 2;
+    ctx.drawImage(video, offsetX, offsetY, size, size, 0, 0, size, size);
     ctx.setTransform(1, 0, 0, 1, 0, 0); // reset transform
 
     const dataUrl = canvas.toDataURL("image/png");
@@ -220,6 +232,7 @@ export function PhotoBoothDashboard() {
     setCapturedImage(null);
     setCapturedImageBase64(null);
     setJobs([]);
+    setProcessing(false);
   }, []);
 
   // ── Toggle style selection ───────────────────────────────────────────────
@@ -290,57 +303,64 @@ export function PhotoBoothDashboard() {
       // Start polling for status
       if (pollingRef.current) clearInterval(pollingRef.current);
 
-      pollingRef.current = setInterval(async () => {
+      const pollJobs = async () => {
         let allDone = true;
-
-        setJobs((prevJobs) => {
-          const updatedJobs = [...prevJobs];
-          void (async () => {
-            for (let i = 0; i < updatedJobs.length; i++) {
-              const job = updatedJobs[i];
-              if (job.status === "success" || job.status === "error") continue;
-
-              allDone = false;
-              try {
-                const statusRes = await fetch(
-                  `/api/photobooth/status?promptId=${encodeURIComponent(job.promptId)}`
-                );
-                const statusData = await statusRes.json();
-
-                if (statusData.status === "success" && statusData.images?.length > 0) {
-                  const img = statusData.images[0];
-                  const imageUrl = `/api/photobooth/image?filename=${encodeURIComponent(img.filename)}&subfolder=${encodeURIComponent(img.subfolder ?? "")}&type=${encodeURIComponent(img.type ?? "output")}`;
-                  updatedJobs[i] = {
-                    ...job,
-                    status: "success",
-                    imageUrl,
-                    imageData: img,
-                  };
-                } else if (statusData.status === "error") {
-                  updatedJobs[i] = {
-                    ...job,
-                    status: "error",
-                    error: statusData.error ?? "Generation failed",
-                  };
-                } else {
-                  updatedJobs[i] = {
-                    ...job,
-                    status: statusData.status === "running" ? "running" : "queued",
-                  };
-                }
-              } catch {
-                // Keep current status on error
-              }
-            }
-          })();
-          return updatedJobs;
+        const currentJobs = await new Promise<StyleJob[]>((resolve) => {
+          setJobs((prevJobs) => {
+            resolve(prevJobs);
+            return prevJobs;
+          });
         });
+
+        const updatedJobs = [...currentJobs];
+        for (let i = 0; i < updatedJobs.length; i++) {
+          const job = updatedJobs[i];
+          if (job.status === "success" || job.status === "error") continue;
+
+          allDone = false;
+          try {
+            const statusRes = await fetch(
+              `/api/photobooth/status?promptId=${encodeURIComponent(job.promptId)}`
+            );
+            const statusData = await statusRes.json();
+
+            if (statusData.status === "success" && statusData.images?.length > 0) {
+              const img = statusData.images[0];
+              const imageUrl = `/api/photobooth/image?filename=${encodeURIComponent(img.filename)}&subfolder=${encodeURIComponent(img.subfolder ?? "")}&type=${encodeURIComponent(img.type ?? "output")}`;
+              updatedJobs[i] = {
+                ...job,
+                status: "success",
+                imageUrl,
+                imageData: img,
+              };
+            } else if (statusData.status === "error") {
+              updatedJobs[i] = {
+                ...job,
+                status: "error",
+                error: statusData.error ?? "Generation failed",
+              };
+            } else {
+              updatedJobs[i] = {
+                ...job,
+                status: statusData.status === "running" ? "running" : "queued",
+              };
+            }
+          } catch {
+            // Keep current status on network error
+          }
+        }
+
+        setJobs(updatedJobs);
 
         if (allDone) {
           if (pollingRef.current) clearInterval(pollingRef.current);
           setProcessing(false);
         }
-      }, 2000);
+      };
+
+      pollingRef.current = setInterval(pollJobs, 2000);
+      // Also poll immediately
+      void pollJobs();
     } catch {
       setJobs(
         Array.from(selectedStyles).map((style) => ({
@@ -377,7 +397,6 @@ export function PhotoBoothDashboard() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch {
-      // Fallback: open in new tab
       window.open(job.imageUrl, "_blank");
     }
   }, []);
@@ -398,28 +417,16 @@ export function PhotoBoothDashboard() {
     [jobs]
   );
 
-  const statusLabel = useMemo(() => {
-    const preset = STYLE_PRESETS.find((s) => s.id === "anime");
-    void preset;
-    if (comfyuiStatus === "checking") return "Checking ComfyUI...";
-    if (comfyuiStatus === "offline") return "ComfyUI Offline";
-    if (!capturedImage) return "Take a photo to start";
-    if (selectedStyles.size === 0) return "Select styles to apply";
-    if (processing) return `Processing ${completedCount}/${jobs.length} styles...`;
-    if (allDone) return `Done! ${completedCount} style${completedCount !== 1 ? "s" : ""} generated`;
-    return "Photo Booth Ready";
-  }, [comfyuiStatus, capturedImage, selectedStyles, processing, completedCount, jobs.length, allDone]);
-
   // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden">
+    <div className="flex h-full w-full flex-col overflow-hidden bg-background">
       {/* ── Header bar ── */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
           <Camera className="h-5 w-5 text-primary" />
           <h2 className="text-base font-semibold text-foreground">Photo Booth</h2>
           <span className="font-mono text-[10px] text-muted-foreground">
-            {statusLabel}
+            Local camera · SDXL style transfer
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -447,97 +454,113 @@ export function PhotoBoothDashboard() {
         </div>
       </div>
 
+      {/* ── Main content ── */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        {/* ── Left panel: Camera / Captured image ── */}
-        <div className="flex w-[440px] shrink-0 flex-col border-r border-border">
-          <div className="relative flex-1 overflow-hidden bg-black">
-            {cameraActive && !capturedImage ? (
-              <>
-                <video
-                  ref={videoRef}
-                  className="h-full w-full object-contain"
-                  style={{ transform: "scaleX(-1)" }}
-                  autoPlay
-                  playsInline
-                  muted
-                />
-                <canvas ref={canvasRef} className="hidden" />
-              </>
-            ) : capturedImage ? (
-              <div className="flex h-full w-full items-center justify-center p-2">
+        {/* ── Left panel: Camera viewport ── */}
+        <div className="flex w-[420px] shrink-0 flex-col items-center border-r border-border bg-black/5">
+          {/* Square viewport */}
+          <div className="flex w-full flex-1 items-center justify-center p-4">
+            <div className="relative aspect-square w-full max-w-[360px] overflow-hidden rounded-2xl border-2 border-border bg-black shadow-xl">
+              {cameraActive && !capturedImage ? (
+                <>
+                  <video
+                    ref={videoRef}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    style={{ transform: "scaleX(-1)" }}
+                    autoPlay
+                    playsInline
+                    muted
+                  />
+                  <canvas ref={canvasRef} className="hidden" />
+                  {/* Capture overlay button */}
+                  <div className="absolute inset-x-0 bottom-0 flex justify-center pb-4">
+                    <button
+                      onClick={capturePhoto}
+                      className="flex h-14 w-14 items-center justify-center rounded-full border-4 border-white bg-white/20 shadow-lg backdrop-blur-sm transition-all hover:bg-white/40 hover:scale-105 active:scale-95"
+                      title="Take photo"
+                    >
+                      <div className="h-10 w-10 rounded-full border-2 border-white bg-white/80" />
+                    </button>
+                  </div>
+                </>
+              ) : capturedImage ? (
                 <img
                   src={capturedImage}
                   alt="Captured"
-                  className="max-h-full max-w-full rounded-lg object-contain shadow-lg"
+                  className="absolute inset-0 h-full w-full object-cover"
                 />
-              </div>
-            ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
-                <Camera className="h-12 w-12 text-muted-foreground/30" />
-                <p className="text-sm text-muted-foreground">
-                  Enable your camera to take a photo
-                </p>
-                {cameraError && (
-                  <div className="flex items-center gap-2 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
-                    <AlertTriangle className="h-3.5 w-3.5" />
-                    {cameraError}
+              ) : (
+                <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-6 text-center">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-surface-2/50">
+                    <Camera className="h-10 w-10 text-muted-foreground/40" />
                   </div>
-                )}
-              </div>
-            )}
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Photo Booth
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground/60">
+                      Take a photo and apply artistic styles
+                    </p>
+                  </div>
+                  {cameraError && (
+                    <div className="flex items-center gap-2 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      {cameraError}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Camera controls */}
-          <div className="flex items-center gap-2 border-t border-border bg-surface-1 px-4 py-3">
+          {/* Camera controls — centered below the square viewport */}
+          <div className="flex w-full items-center justify-center gap-2 border-t border-border bg-surface-1 px-4 py-3">
             {!cameraActive ? (
               <button
                 onClick={startCamera}
-                className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+                className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90 transition-opacity"
               >
                 <Camera className="h-4 w-4" />
                 Start Camera
               </button>
-            ) : (
+            ) : capturedImage ? (
               <>
                 <button
-                  onClick={capturePhoto}
-                  disabled={!!capturedImage}
-                  className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-40"
+                  onClick={clearCapture}
+                  className="flex items-center gap-2 rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm font-medium text-muted-foreground shadow-sm hover:text-foreground transition-colors"
                 >
-                  <Camera className="h-4 w-4" />
-                  Capture
+                  <RotateCcw className="h-4 w-4" />
+                  Retake
                 </button>
-                {capturedImage && (
-                  <button
-                    onClick={clearCapture}
-                    className="flex items-center gap-2 rounded-md border border-border bg-surface-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="h-4 w-4" />
-                    Retake
-                  </button>
-                )}
                 <button
                   onClick={stopCamera}
-                  className="ml-auto flex items-center gap-2 rounded-md border border-border bg-surface-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+                  className="flex items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <CameraOff className="h-4 w-4" />
-                  Stop
                 </button>
               </>
+            ) : (
+              <button
+                onClick={stopCamera}
+                className="flex items-center gap-2 rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm font-medium text-muted-foreground shadow-sm hover:text-foreground transition-colors"
+              >
+                <CameraOff className="h-4 w-4" />
+                Stop Camera
+              </button>
             )}
           </div>
         </div>
 
-        {/* ── Right panel: Style selection + results ── */}
+        {/* ── Right panel: Styles + Results ── */}
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          {/* ── Style selection grid ── */}
+          {/* ── Style selection ── */}
           <div className="border-b border-border px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />
                 <h3 className="text-sm font-semibold text-foreground">Styles</h3>
                 <span className="font-mono text-[10px] text-muted-foreground">
-                  {selectedStyles.size}/{STYLE_PRESETS.length} selected
+                  {selectedStyles.size}/{STYLE_PRESETS.length}
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
@@ -614,11 +637,9 @@ export function PhotoBoothDashboard() {
                       )}
                     </div>
                     {/* Label */}
-                    <div className="text-center">
-                      <span className="text-[11px] font-medium text-foreground">
-                        {style.emoji} {style.label}
-                      </span>
-                    </div>
+                    <span className="text-[11px] font-medium text-foreground">
+                      {style.emoji} {style.label}
+                    </span>
                   </button>
                 );
               })}
