@@ -170,15 +170,40 @@ export function PhotoBoothDashboard() {
           width: { ideal: 1024 },
           height: { ideal: 1024 },
           facingMode: "user",
-          aspectRatio: { ideal: 1 },
         },
         audio: false,
       });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        setCameraActive(true);
+      // Wait for the next render to ensure videoRef is attached
+      const video = videoRef.current;
+      if (!video) {
+        stream.getTracks().forEach((t) => t.stop());
+        setCameraError("Video element not ready. Please try again.");
+        return;
       }
+      video.srcObject = stream;
+      // Explicitly wait for loadedmetadata before playing
+      await new Promise<void>((resolve, reject) => {
+        const onLoaded = () => {
+          video.removeEventListener("loadedmetadata", onLoaded);
+          video.removeEventListener("error", onError);
+          resolve();
+        };
+        const onError = () => {
+          video.removeEventListener("loadedmetadata", onLoaded);
+          video.removeEventListener("error", onError);
+          reject(new Error("Video failed to load"));
+        };
+        video.addEventListener("loadedmetadata", onLoaded);
+        video.addEventListener("error", onError);
+        // Timeout fallback
+        setTimeout(() => {
+          video.removeEventListener("loadedmetadata", onLoaded);
+          video.removeEventListener("error", onError);
+          resolve(); // resolve anyway, play() will handle it
+        }, 3000);
+      });
+      await video.play();
+      setCameraActive(true);
     } catch (err) {
       setCameraError(
         err instanceof Error ? err.message : "Failed to access camera"
@@ -457,23 +482,33 @@ export function PhotoBoothDashboard() {
       {/* ── Main content ── */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* ── Left panel: Camera viewport ── */}
-        <div className="flex w-[420px] shrink-0 flex-col items-center border-r border-border bg-black/5">
-          {/* Square viewport */}
-          <div className="flex w-full flex-1 items-center justify-center p-4">
-            <div className="relative aspect-square w-full max-w-[360px] overflow-hidden rounded-2xl border-2 border-border bg-black shadow-xl">
+        <div className="flex w-[420px] shrink-0 flex-col border-r border-border bg-surface-1">
+          {/* Camera viewport — takes remaining space */}
+          <div className="flex flex-1 items-center justify-center p-4 min-h-0">
+            <div className="relative w-full overflow-hidden rounded-2xl border-2 border-border bg-black shadow-xl" style={{ aspectRatio: "1 / 1" }}>
               {cameraActive && !capturedImage ? (
                 <>
                   <video
+                    key={cameraActive ? "active" : "inactive"}
                     ref={videoRef}
-                    className="absolute inset-0 h-full w-full object-cover"
-                    style={{ transform: "scaleX(-1)" }}
-                    autoPlay
                     playsInline
+                    autoPlay
                     muted
+                    width={1024}
+                    height={1024}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      transform: "scaleX(-1)",
+                    }}
                   />
                   <canvas ref={canvasRef} className="hidden" />
                   {/* Capture overlay button */}
-                  <div className="absolute inset-x-0 bottom-0 flex justify-center pb-4">
+                  <div style={{ position: "absolute", bottom: 16, left: 0, right: 0, display: "flex", justifyContent: "center" }}>
                     <button
                       onClick={capturePhoto}
                       className="flex h-14 w-14 items-center justify-center rounded-full border-4 border-white bg-white/20 shadow-lg backdrop-blur-sm transition-all hover:bg-white/40 hover:scale-105 active:scale-95"
@@ -487,18 +522,25 @@ export function PhotoBoothDashboard() {
                 <img
                   src={capturedImage}
                   alt="Captured"
-                  className="absolute inset-0 h-full w-full object-cover"
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
                 />
               ) : (
-                <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-6 text-center">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-surface-2/50">
-                    <Camera className="h-10 w-10 text-muted-foreground/40" />
+                <div className="absolute inset-0 flex h-full w-full flex-col items-center justify-center gap-4 p-6 text-center">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/10">
+                    <Camera className="h-10 w-10 text-white/30" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className="text-sm font-medium text-white/50">
                       Photo Booth
                     </p>
-                    <p className="mt-1 text-xs text-muted-foreground/60">
+                    <p className="mt-1 text-xs text-white/30">
                       Take a photo and apply artistic styles
                     </p>
                   </div>
@@ -514,7 +556,7 @@ export function PhotoBoothDashboard() {
           </div>
 
           {/* Camera controls — centered below the square viewport */}
-          <div className="flex w-full items-center justify-center gap-2 border-t border-border bg-surface-1 px-4 py-3">
+          <div className="flex w-full shrink-0 items-center justify-center gap-2 border-t border-border bg-surface-1 px-4 py-3">
             {!cameraActive ? (
               <button
                 onClick={startCamera}
