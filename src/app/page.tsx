@@ -1309,8 +1309,8 @@ const AgentROCclawPage = () => {
         <HeaderBar />
         <TabBar activeTabs={activeTabs} onTabToggle={(tabId) => {
           setActiveTabs((current) => {
-            // Tasks, Skills, and PhotoBooth tabs are exclusive — selecting one replaces everything
-            const exclusiveTabs: TabId[] = ["tasks", "skills", "photobooth"];
+            // Tasks and Skills tabs are exclusive — selecting one replaces everything
+            const exclusiveTabs: TabId[] = ["tasks", "skills"];
             if (exclusiveTabs.includes(tabId)) {
               return current.includes(tabId) ? [] : [tabId];
             }
@@ -1325,7 +1325,7 @@ const AgentROCclawPage = () => {
           });
         }} />
         <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 pb-3 pt-2 sm:px-4 sm:pb-4 sm:pt-3 md:px-5 md:pb-5 md:pt-3">
-          {/* Tasks/Skills/PhotoBooth tabs take exclusive full-width focus — hide everything else */}
+          {/* Tasks/Skills tabs take exclusive full-width focus — hide everything else */}
           {(activeTabs.length === 1 && activeTabs[0] === "tasks") ? (
             <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
               <TasksDashboard />
@@ -1333,10 +1333,6 @@ const AgentROCclawPage = () => {
           ) : (activeTabs.length === 1 && activeTabs[0] === "skills") ? (
             <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
               <SkillsDashboard />
-            </div>
-          ) : (activeTabs.length === 1 && activeTabs[0] === "photobooth") ? (
-            <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-              <PhotoBoothDashboard />
             </div>
           ) : (
             <>
@@ -1610,6 +1606,13 @@ const AgentROCclawPage = () => {
                 {activeTabs.includes("settings") ? (
                   <div className="ui-panel ui-depth-workspace flex h-full min-h-0 flex-1 flex-col overflow-hidden">
                     <SettingsPanel />
+                  </div>
+                ) : null}
+
+                {/* Photo Booth Tab */}
+                {activeTabs.includes("photobooth") ? (
+                  <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+                    <PhotoBoothDashboard />
                   </div>
                 ) : null}
               </div>

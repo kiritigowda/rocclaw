@@ -650,7 +650,7 @@ export function PhotoBoothDashboard() {
               </div>
             </div>
 
-            <div className="mt-3 grid grid-cols-3 gap-2">
+            <div className="mt-3 grid grid-cols-3 gap-3">
               {STYLE_PRESETS.map((style) => {
                 const isSelected = selectedStyles.has(style.id);
                 const job = jobs.find((j) => j.style === style.id);
@@ -661,55 +661,57 @@ export function PhotoBoothDashboard() {
                     key={style.id}
                     onClick={() => !processing && toggleStyle(style.id)}
                     disabled={processing}
-                    className={`group relative flex flex-col items-center gap-1.5 rounded-xl border p-2.5 transition-all ${
+                    className={`group relative flex flex-col overflow-hidden rounded-xl border transition-all ${
                       isSelected
-                        ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                        ? "border-primary ring-2 ring-primary/40"
                         : isProcessing
-                          ? "border-accent bg-accent/5"
-                          : "border-border bg-surface-1 hover:border-accent/40 hover:bg-surface-2/30"
+                          ? "border-accent ring-1 ring-accent/30"
+                          : "border-border hover:border-accent/40 hover:ring-1 hover:ring-accent/20"
                     } ${processing ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
                   >
-                    {/* Thumbnail */}
-                    <div className="relative h-16 w-16 overflow-hidden rounded-lg bg-surface-2">
+                    {/* Full-width thumbnail image */}
+                    <div className="relative aspect-square w-full overflow-hidden bg-surface-2">
                       <Image
                         src={style.thumbnailPath}
                         alt={style.label}
-                        width={64}
-                        height={64}
+                        width={256}
+                        height={256}
                         className="h-full w-full object-cover"
                         unoptimized
                       />
                       {/* Processing overlay */}
                       {isProcessing && (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                          <Loader className="h-5 w-5 animate-spin text-white" />
+                          <Loader className="h-8 w-8 animate-spin text-white" />
                         </div>
                       )}
                       {/* Completed overlay */}
                       {job?.status === "success" && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-green-500/20">
-                          <CheckCircle className="h-5 w-5 text-green-400" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-green-500/25">
+                          <CheckCircle className="h-8 w-8 text-green-400 drop-shadow-lg" />
                         </div>
                       )}
                       {/* Error overlay */}
                       {job?.status === "error" && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-red-500/20">
-                          <AlertTriangle className="h-4 w-4 text-red-400" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-red-500/25">
+                          <AlertTriangle className="h-6 w-6 text-red-400 drop-shadow-lg" />
                         </div>
                       )}
-                      {/* Selection checkmark */}
+                      {/* Selection checkmark badge */}
                       {isSelected && !isProcessing && job?.status !== "success" && (
-                        <div className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary">
-                          <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <div className="absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary shadow-md">
+                          <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
                       )}
+                      {/* Style name overlay at bottom of image */}
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-2 pb-1.5 pt-4">
+                        <span className="text-xs font-semibold text-white drop-shadow-md">
+                          {style.emoji} {style.label}
+                        </span>
+                      </div>
                     </div>
-                    {/* Label */}
-                    <span className="text-[11px] font-medium text-foreground">
-                      {style.emoji} {style.label}
-                    </span>
                   </button>
                 );
               })}
