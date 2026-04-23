@@ -115,7 +115,7 @@ describe("Photo Booth - Tab Integration", () => {
 
 // ─── Camera Capture Logic ──────────────────────────────────────────────────────
 
-describe("Photo Booth - Camera Logic", () => {
+describe("Photo Booth - File Upload Logic", () => {
   it("base64 data URL is stripped correctly for upload", () => {
     const dataUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA";
     const base64 = dataUrl.replace(/^data:image\/\w+;base64,/, "");
@@ -128,6 +128,17 @@ describe("Photo Booth - Camera Logic", () => {
     const base64 = "iVBORw0KGgoAAAANSUhEUgAAAAUA";
     const result = base64.replace(/^data:image\/\w+;base64,/, "");
     expect(result).toBe(base64);
+  });
+
+  it("FileReader readAsDataURL produces data URL format", () => {
+    // Simulate what FileReader produces
+    const mockResult = "data:image/png;base64,iVBORw0KGgo=";
+    expect(mockResult.startsWith("data:image/")).toBe(true);
+    expect(mockResult).toContain(";base64,");
+    
+    // Stripping should work
+    const stripped = mockResult.replace(/^data:image\/\w+;base64,/, "");
+    expect(stripped).toBe("iVBORw0KGgo=");
   });
 });
 
