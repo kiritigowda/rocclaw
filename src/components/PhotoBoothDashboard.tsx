@@ -665,13 +665,6 @@ export function PhotoBoothDashboard() {
               )}
             </div>
 
-            {!capturedImage && !cameraActive && (
-              <button onClick={() => fileInputRef.current?.click()}
-                aria-label="Load an image from disk"
-                className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-surface-2/50 px-3 py-1.5 text-[10px] text-muted-foreground hover:border-accent/40 hover:text-foreground shrink-0">
-                <Upload className="h-3 w-3" /> Or load an image from disk
-              </button>
-            )}
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} className="hidden" aria-hidden="true" />
 
             {processing && (
