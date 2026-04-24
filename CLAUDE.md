@@ -95,7 +95,7 @@ src/
         chatItems.ts                   # Transcript parsing and render block building (~372 lines)
       AgentInspectPanels.tsx          # Agent capabilities/automations/advanced panels (~562 lines)
       inspect/AgentBrainPanel.tsx     # Personality file editor (SOUL, AGENTS, USER, IDENTITY) (~280 lines)
-      FleetSidebar.tsx                # Agent grid with status indicators and avatars
+      FleetSidebar.tsx                # Agent grid with search/filter, status indicators, and avatars
       AgentCreateModal.tsx            # Agent creation dialog
       ConnectionPanel.tsx             # Compact connection panel (modal/sidebar)
     operations/                       # Business logic (35 files, workflow/operation pattern)
@@ -232,7 +232,7 @@ import { something } from "@/lib/gateway/agentConfig";
 
 | Tab | Component | Description |
 |-----|-----------|-------------|
-| Agents | `FleetSidebar` | Agent grid with status cards, avatars, "Needs Approval" badges |
+| Agents | `FleetSidebar` | Agent grid with search/filter, status cards, avatars, "Needs Approval" badges |
 | Chat | `AgentChatPanel` | Real-time streaming chat with thinking traces and tool calls |
 | Connection | `ConnectionPage` | 4-tab gateway config (Local/Client/Cloud/Remote) |
 | System | `SystemMetricsDashboard` | Live CPU/GPU/memory/disk/network gauges |

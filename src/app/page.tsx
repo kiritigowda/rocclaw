@@ -23,7 +23,7 @@ import { TasksDashboard } from "@/components/TasksDashboard";
 import { TokenUsageDashboard } from "@/components/TokenUsageDashboard";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { ConnectionPage } from "@/components/ConnectionPage";
-import { TabBar, type TabId, getDefaultActiveTabs } from "@/components/TabBar";
+import { TabBar, type TabId, getDefaultActiveTabs, VALID_TAB_IDS } from "@/components/TabBar";
 import {
   isHeartbeatPrompt,
 } from "@/lib/text/message-extract";
@@ -202,7 +202,10 @@ const AgentROCclawPage = () => {
       const stored = localStorage.getItem("rocclaw-active-tabs");
       if (stored) {
         const parsed = JSON.parse(stored) as TabId[];
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) {
+          const valid = parsed.filter((id) => VALID_TAB_IDS.has(id));
+          if (valid.length > 0) return valid;
+        }
       }
     } catch { /* use defaults */ }
     return getDefaultActiveTabs();

@@ -122,6 +122,8 @@ export function TabBar({ activeTabs, onTabToggle }: TabBarProps) {
   );
 }
 
+export const VALID_TAB_IDS: ReadonlySet<string> = new Set(AVAILABLE_TABS.map(tab => tab.id));
+
 export function getDefaultActiveTabs(): TabId[] {
   return AVAILABLE_TABS
     .filter(tab => tab.defaultActive)

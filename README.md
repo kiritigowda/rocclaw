@@ -153,7 +153,7 @@ rocCLAW provides 8 toggleable dashboard tabs that can be shown side-by-side:
 
 | Tab | Description |
 |-----|-------------|
-| **Agents** | Fleet sidebar with agent cards showing status indicators, avatars, and identity names |
+| **Agents** | Fleet sidebar with agent cards, search/filter, status indicators, avatars, and identity names |
 | **Chat** | Real-time streaming chat with the focused agent, including thinking traces and tool calls |
 | **Connection** | 4-tab gateway connection settings with connection testing |
 | **System** | Live system metrics -- CPU cores/threads, memory, GPU (ROCm + fallback), disk, and network |

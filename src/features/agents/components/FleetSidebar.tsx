@@ -15,8 +15,8 @@ import { Plus, Cpu, Search } from "lucide-react";
 type FleetSidebarProps = {
   agents: AgentState[];
   selectedAgentId: string | null;
-  filter: FocusFilter;
-  onFilterChange: (next: FocusFilter) => void;
+  filter?: FocusFilter;
+  onFilterChange?: (next: FocusFilter) => void;
   onSelectAgent: (agentId: string) => void;
   onCreateAgent: () => void;
   createDisabled?: boolean;
