@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Cat profile avatars as a default avatar option alongside auto-generated Multiavatar SVGs
+- System metrics time-series graph view (SystemGraphView) with Recharts — CPU, memory, GPU, VRAM, temperature charts with 5m/10m/30m time ranges
+- Ed25519 device identity for cryptographic gateway authentication (challenge-response handshake, v3 format)
+- Comprehensive unit tests for core business logic (145 test files, 1,091 tests)
+- ROCm "Powered by" banner with version display in GPU metrics section
+- Basic GPU fallback detection when ROCm is not installed (lspci + DRM sysfs)
+- Start scripts (`start.sh`, `start.bat`) for build-and-release workflow
+
+### Fixed
+- System metrics correctly showing "Remote" label when browser accesses rocCLAW from a remote machine
+- System metrics no longer showing "Remote" on the host machine itself
+- CPU display correctly shows physical cores vs logical threads
+- Task avatar sync on page reload
+- GPU detection for Strix Point iGPUs with mismatched rocm-smi indices
+
 ## [1.0.0] — 2026-04-07
 
 ### Changed
@@ -56,7 +74,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `setState-in-effect` lint errors
 
 ### Infrastructure
-- GitHub Actions CI pipeline
-- Playwright E2E test suite
-- Vitest unit test suite
+- GitHub Actions CI pipeline (4 parallel jobs: lint+typecheck, unit tests, build, E2E)
+- Playwright E2E test suite (11 specs)
+- Vitest unit test suite (145 files, 1,091 tests)
 - ESLint + TypeScript strict type checking
+- Continuous release workflow on master pushes
+- npm package distribution (`@simoncatbot/rocclaw`)
