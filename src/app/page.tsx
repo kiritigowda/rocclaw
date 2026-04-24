@@ -1600,12 +1600,10 @@ const AgentROCclawPage = () => {
                   </div>
                 ) : null}
 
-                {/* Graph Tab */}
-                {activeTabs.includes("graph") ? (
-                  <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-                    <SystemGraphView />
-                  </div>
-                ) : null}
+                {/* Graph Tab — kept mounted so history data survives tab toggles */}
+                <div className={`flex h-full min-h-0 flex-1 flex-col overflow-hidden ${activeTabs.includes("graph") ? "" : "hidden"}`}>
+                  <SystemGraphView />
+                </div>
 
                 {/* Tasks Tab */}
                 {activeTabs.includes("tasks") ? (
