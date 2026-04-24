@@ -485,8 +485,8 @@ export function PhotoBoothDashboard() {
         <div className="flex flex-col border-b lg:border-b-0 lg:border-r border-border overflow-hidden">
 
           {/* ── Row 1: Camera ── */}
-          <div className="flex flex-col items-center justify-center gap-2 border-b border-border p-3 shrink-0">
-            <div className="relative w-full max-w-[240px] overflow-hidden rounded-xl border-2 border-border bg-black" style={{ aspectRatio: "1 / 1" }}>
+          <div className="flex flex-col items-center justify-center gap-2 border-b border-border p-3 flex-1 min-h-0">
+            <div className="relative w-full max-w-[360px] overflow-hidden rounded-xl border-2 border-border bg-black" style={{ aspectRatio: "1 / 1" }}>
               {/* Video always in DOM */}
               <video
                 ref={videoRef}
@@ -571,8 +571,8 @@ export function PhotoBoothDashboard() {
             </div>
           </div>
 
-          {/* ── Row 2: Styles + Generate (fills remaining space) ── */}
-          <div className="flex flex-1 flex-col p-3 min-h-0 gap-2">
+          {/* ── Row 2: Styles + Generate ── */}
+          <div className="flex flex-col p-3 shrink-0 gap-2">
             {/* Style header */}
             <div className="flex items-center justify-between shrink-0">
               <div className="flex items-center gap-1.5">
@@ -592,8 +592,8 @@ export function PhotoBoothDashboard() {
               </div>
             </div>
 
-            {/* 3×3 style grid — fills available space */}
-            <div className="grid flex-1 grid-cols-2 sm:grid-cols-3 gap-1.5 min-h-0" role="group" aria-label="Style presets">
+            {/* 3×3 style grid — compact square block */}
+            <div className="grid grid-cols-3 gap-1.5 max-w-[280px]" role="group" aria-label="Style presets">
               {STYLE_PRESETS.map((style, index) => {
                 const isSelected = selectedStyles.has(style.id);
                 const job = jobs.find((j) => j.style === style.id);
@@ -607,7 +607,7 @@ export function PhotoBoothDashboard() {
                     disabled={processing}
                     aria-pressed={isSelected}
                     aria-label={`${style.label} - ${style.description}`}
-                    className={`group relative overflow-hidden rounded-lg transition-all ${
+                    className={`group relative aspect-square overflow-hidden rounded-lg transition-all ${
                       isSelected ? "ui-card-selected"
                         : isProcessing ? "ui-card ring-1 ring-accent/30"
                           : "ui-card hover:border-accent/40"
