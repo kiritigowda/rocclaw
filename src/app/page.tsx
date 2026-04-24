@@ -25,7 +25,7 @@ import { SettingsPanel } from "@/components/SettingsPanel";
 import { ConnectionPage } from "@/components/ConnectionPage";
 import { PhotoBoothDashboard } from "@/components/PhotoBoothDashboard";
 import { SkillsDashboard } from "@/components/SkillsDashboard";
-import { TabBar, type TabId, getDefaultActiveTabs } from "@/components/TabBar";
+import { TabBar, type TabId, getDefaultActiveTabs, VALID_TAB_IDS } from "@/components/TabBar";
 import {
   isHeartbeatPrompt,
 } from "@/lib/text/message-extract";
@@ -198,7 +198,20 @@ const AgentROCclawPage = () => {
   const [createAgentBusy, setCreateAgentBusy] = useState(false);
   const [createAgentModalOpen, setCreateAgentModalOpen] = useState(false);
   const [createAgentModalError, setCreateAgentModalError] = useState<string | null>(null);
-  const [activeTabs, setActiveTabs] = useState<TabId[]>(getDefaultActiveTabs);
+  const [activeTabs, setActiveTabs] = useState<TabId[]>(() => {
+    if (typeof window === "undefined") return getDefaultActiveTabs();
+    try {
+      const stored = localStorage.getItem("rocclaw-active-tabs");
+      if (stored) {
+        const parsed = JSON.parse(stored) as TabId[];
+        if (Array.isArray(parsed)) {
+          const valid = parsed.filter((id) => VALID_TAB_IDS.has(id));
+          if (valid.length > 0) return valid;
+        }
+      }
+    } catch { /* use defaults */ }
+    return getDefaultActiveTabs();
+  });
   const [inspectSidebar, setInspectSidebar] = useState<InspectSidebarState>(null);
   const setMobilePaneChat = useCallback(() => {}, []);
   const [personalityHasUnsavedChanges, setPersonalityHasUnsavedChanges] = useState(false);
@@ -463,6 +476,13 @@ const AgentROCclawPage = () => {
     hasRestartBlockInProgress,
   });
   enqueueConfigMutationRef.current = enqueueConfigMutation;
+
+  // Persist active tabs to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem("rocclaw-active-tabs", JSON.stringify(activeTabs));
+    } catch { /* best-effort */ }
+  }, [activeTabs]);
 
   useEffect(() => {
     stateRef.current = state;
@@ -1324,7 +1344,7 @@ const AgentROCclawPage = () => {
             return next;
           });
         }} />
-        <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 pb-3 pt-2 sm:px-4 sm:pb-4 sm:pt-3 md:px-5 md:pb-5 md:pt-3">
+        <main id="main-content" className="flex min-h-0 flex-1 flex-col gap-3 px-3 pb-3 pt-2 sm:px-4 sm:pb-4 sm:pt-3 md:px-5 md:pb-5 md:pt-3">
           {/* Tasks/Skills tabs take exclusive full-width focus — hide everything else */}
           {(activeTabs.length === 1 && activeTabs[0] === "tasks") ? (
             <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
@@ -1337,10 +1357,9 @@ const AgentROCclawPage = () => {
           ) : (
             <>
           {connectionPanelVisible ? (
-            <div className="fixed inset-0 z-[200] pointer-events-none" data-testid="gateway-connection-overlay">
+            <div className="fixed inset-0 z-[200]" data-testid="gateway-connection-overlay">
               <div
                 className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-                style={{ pointerEvents: "none" }}
                 onClick={() => setShowConnectionPanel(false)}
               />
               <div className="absolute inset-x-0 bottom-8 top-auto flex justify-center px-3 sm:px-4 md:px-5 pointer-events-none">
@@ -1620,7 +1639,7 @@ const AgentROCclawPage = () => {
           )}
             </>
           )}
-        </div>
+        </main>
         <FooterBar status={gatewayStatus} gatewayVersion={installContext?.localGateway?.runtimeVersion} onConnectionSettings={() => setShowConnectionPanel(true)} />
       </div>
       {createAgentModalOpen ? (
