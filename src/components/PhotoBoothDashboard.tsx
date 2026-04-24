@@ -157,28 +157,76 @@ export function PhotoBoothDashboard() {
     try {
       setCameraError(null);
       setCameraReady(false);
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 1024 }, height: { ideal: 1024 }, facingMode: "user" },
-        audio: false,
-      });
+
+      // Release any existing stream before requesting a new one.
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+
+      // Try with relaxed constraints first, then strict if the device
+      // supports it.  "facingMode: user" can fail on desktop browsers
+      // that only have one camera — we try without it as a fallback.
+      let stream: MediaStream | null = null;
+
+      // Attempt 1: specific constraints (user-facing, 1024x1024)
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1024 }, height: { ideal: 1024 }, facingMode: "user" },
+          audio: false,
+        });
+      } catch {
+        // Attempt 2: drop facingMode (desktop with single webcam)
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 1024 }, height: { ideal: 1024 } },
+            audio: false,
+          });
+        } catch {
+          // Attempt 3: minimal constraints — accept whatever the browser offers
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false,
+          });
+        }
+      }
+
       streamRef.current = stream;
       // Store stream and mark active — the useEffect above will attach it
       pendingStreamRef.current = stream;
       setCameraActive(true);
     } catch (err) {
+      const msg = err instanceof DOMException
+        ? {
+            NotAllowedError: "Camera access denied — check browser permissions",
+            NotFoundError: "No camera found — is it connected?",
+            NotReadableError: "Camera is in use by another app",
+            OverconstrainedError: "Camera doesn't support requested resolution",
+            SecurityError: "Camera access blocked by browser security policy",
+          }[err.name] ?? `Camera error: ${err.name}`
+        : err instanceof Error
+          ? err.message
+          : "Failed to access camera";
+
       setCameraActive(false);
       setCameraReady(false);
-      setCameraError(err instanceof Error ? err.message : "Failed to access camera");
+      setCameraError(msg);
     }
   }, []);
 
   // ── Stop camera ──────────────────────────────────────────────────────────
   const stopCamera = useCallback(() => {
-    if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null; }
-    if (videoRef.current) { videoRef.current.srcObject = null; }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
     pendingStreamRef.current = null;
     setCameraActive(false);
     setCameraReady(false);
+    setCameraError(null);
   }, []);
 
   // ── Capture photo ────────────────────────────────────────────────────────
