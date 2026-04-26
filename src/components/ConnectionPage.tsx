@@ -11,16 +11,16 @@ import {
   EyeOff,
   Loader2,
   Monitor,
+  Cloud,
   Globe,
   Server,
   Shield,
   Key,
   Link,
-  ChevronDown,
-  ChevronRight,
   Wifi,
   WifiOff,
   Terminal,
+  Zap,
   CheckCircle,
   XCircle,
 } from "lucide-react";
@@ -32,6 +32,15 @@ import {
   type ROCclawInstallContext,
 } from "@/lib/rocclaw/install-context";
 import type { ROCclawGatewaySettings } from "@/lib/rocclaw/settings";
+
+type ConnectionTab = "local" | "client" | "cloud" | "remote";
+
+const CONNECTION_TABS: { id: ConnectionTab; label: string; icon: typeof Monitor }[] = [
+  { id: "local", label: "Local", icon: Monitor },
+  { id: "client", label: "Client", icon: Server },
+  { id: "cloud", label: "Cloud", icon: Cloud },
+  { id: "remote", label: "Remote", icon: Globe },
+];
 
 export interface ConnectionPageProps {
   savedGatewayUrl: string;
@@ -125,48 +134,51 @@ export function ConnectionPage({
   onConnect,
   onClearError,
 }: ConnectionPageProps) {
+  const inferredTab = useMemo((): ConnectionTab => {
+    const scenario = resolveDefaultSetupScenario({
+      installContext,
+      gatewayUrl: draftGatewayUrl || savedGatewayUrl,
+    });
+    if (scenario === "remote-gateway") return "remote";
+    if (scenario === "same-cloud-host") return "cloud";
+    return "local";
+  }, [installContext, draftGatewayUrl, savedGatewayUrl]);
+
+  const [activeTab, setActiveTab] = useState<ConnectionTab>(inferredTab);
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
   const [showToken, setShowToken] = useState(false);
-  const [showAdvancedSetup, setShowAdvancedSetup] = useState(false);
 
   const localPort = useMemo(
     () => resolveLocalGatewayPort(draftGatewayUrl || savedGatewayUrl),
     [draftGatewayUrl, savedGatewayUrl]
   );
 
-  const scenario = useMemo(
-    () => resolveDefaultSetupScenario({
-      installContext,
-      gatewayUrl: draftGatewayUrl || savedGatewayUrl,
-    }),
-    [installContext, draftGatewayUrl, savedGatewayUrl]
-  );
-
   const localGatewayCommand = `openclaw gateway --port ${localPort}`;
   const gatewayServeCommand = `tailscale serve --yes --bg --https 443 http://127.0.0.1:${localPort}`;
   const rocclawServeCommand = "tailscale serve --yes --bg --https 443 http://127.0.0.1:3000";
+
+  const rocclawOpenUrl = installContext.tailscale.loggedIn && installContext.tailscale.dnsName
+    ? `https://${installContext.tailscale.dnsName}`
+    : "https://<rocclaw-host>.ts.net";
 
   const rocclawSshTarget = installContext.tailscale.dnsName || "<rocclaw-host>";
   const rocclawTunnelCommand = `ssh -L 3000:127.0.0.1:3000 ${rocclawSshTarget}`;
   const gatewayTunnelCommand = `ssh -L ${localPort}:127.0.0.1:${localPort} user@<gateway-host>`;
 
-  const gatewayConfigCommands = [
-    `openclaw config set gateway.port ${localPort}`,
-    `openclaw config set gateway.host 127.0.0.1`,
-  ];
-
   const warnings = useMemo<ROCclawConnectionWarning[]>(() => {
     return resolveGatewayConnectionWarnings({
       gatewayUrl: draftGatewayUrl,
       installContext,
-      scenario,
+      scenario: activeTab === "local" ? "same-computer" :
+                activeTab === "client" ? "remote-gateway" : "same-cloud-host",
       hasStoredToken,
       hasLocalGatewayToken: localGatewayDefaultsHasToken,
     });
-  }, [draftGatewayUrl, hasStoredToken, installContext, localGatewayDefaultsHasToken, scenario]);
+  }, [draftGatewayUrl, hasStoredToken, installContext, localGatewayDefaultsHasToken, activeTab]);
 
   const actionBusy = saving || testing || disconnecting;
 
+  // URL validation
   const urlValidationError = (() => {
     const url = draftGatewayUrl.trim();
     if (!url) return null;
@@ -178,7 +190,6 @@ export function ConnectionPage({
     }
     return null;
   })();
-
   const isConnected = status === "connected";
 
   const tokenHelper = hasStoredToken
@@ -201,13 +212,199 @@ export function ConnectionPage({
     void copyCommand(value);
   };
 
+  const applyLoopbackUrl = () => {
+    onGatewayUrlChange(`ws://localhost:${localPort}`);
+  };
+
   // Resolve banner state
   const probeHealthy = installContext.localGateway.probeHealthy;
   const cliAvailable = installContext.localGateway.cliAvailable;
   const localGatewayUrl = installContext.localGateway.url;
 
+  // Tab content definitions
+  const tabContents: Record<ConnectionTab, { title: string; description: string; content: React.ReactNode }> = {
+    local: {
+      title: "Local Connection",
+      description: "rocCLAW and OpenClaw on the same machine",
+      content: (
+        <div className="space-y-5">
+          <div className="ui-card p-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="ui-card p-2 rounded-lg">
+                <Monitor className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Start OpenClaw</p>
+                <p className="text-xs text-muted-foreground">Run this command on your machine</p>
+              </div>
+            </div>
+            <CommandBlock command={localGatewayCommand} copiedCommand={copiedCommand} onCopy={handleCopy} />
+          </div>
+
+          <div className="ui-card p-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="ui-card p-2 rounded-lg">
+                <Zap className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Quick Connect</p>
+                <p className="text-xs text-muted-foreground">Use local defaults if available</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="ui-btn-secondary h-9 px-4 text-xs font-semibold"
+                onClick={applyLoopbackUrl}
+              >
+                Use localhost:{localPort}
+              </button>
+              {localGatewayDefaults && (
+                <button
+                  type="button"
+                  className="ui-btn-secondary h-9 px-4 text-xs font-semibold"
+                  onClick={onUseLocalDefaults}
+                >
+                  Use Local Defaults
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    client: {
+      title: "Client Connection",
+      description: "Local rocCLAW connecting to remote OpenClaw",
+      content: (
+        <div className="space-y-5">
+          <div className="ui-card p-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="ui-card p-2 rounded-lg">
+                <Server className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">On Gateway Host</p>
+                <p className="text-xs text-muted-foreground">Expose OpenClaw with Tailscale</p>
+              </div>
+            </div>
+            <CommandBlock command={gatewayServeCommand} copiedCommand={copiedCommand} onCopy={handleCopy} />
+            <p className="text-xs text-muted-foreground mt-3">
+              Then enter <code className="font-mono">wss://&lt;gateway-host&gt;.ts.net</code> in the URL field.
+            </p>
+          </div>
+
+          <div className="ui-card p-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="ui-card p-2 rounded-lg">
+                <Shield className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Fallback: SSH Tunnel</p>
+                <p className="text-xs text-muted-foreground">If Tailscale is not available</p>
+              </div>
+            </div>
+            <CommandBlock command={gatewayTunnelCommand} copiedCommand={copiedCommand} onCopy={handleCopy} />
+            <button
+              type="button"
+              className="ui-btn-secondary h-9 px-4 text-xs font-semibold mt-3"
+              onClick={applyLoopbackUrl}
+            >
+              Use SSH Tunnel URL
+            </button>
+          </div>
+        </div>
+      ),
+    },
+    cloud: {
+      title: "Cloud Setup",
+      description: "rocCLAW and OpenClaw on same cloud machine",
+      content: (
+        <div className="space-y-5">
+          <div className="ui-card p-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="ui-card p-2 rounded-lg">
+                <Cloud className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Expose rocCLAW</p>
+                <p className="text-xs text-muted-foreground">Make rocCLAW accessible via Tailscale</p>
+              </div>
+            </div>
+            <CommandBlock command={rocclawServeCommand} copiedCommand={copiedCommand} onCopy={handleCopy} />
+            <p className="text-xs text-muted-foreground mt-3">
+              Then open <code className="font-mono">{rocclawOpenUrl}</code>
+            </p>
+          </div>
+
+          <div className="ui-card p-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="ui-card p-2 rounded-lg">
+                <Server className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Start OpenClaw</p>
+                <p className="text-xs text-muted-foreground">On the same cloud machine</p>
+              </div>
+            </div>
+            <CommandBlock command={localGatewayCommand} copiedCommand={copiedCommand} onCopy={handleCopy} />
+            <div className="flex gap-2 mt-3">
+              <button
+                type="button"
+                className="ui-btn-secondary h-9 px-4 text-xs font-semibold"
+                onClick={applyLoopbackUrl}
+              >
+                Use Localhost
+              </button>
+              {localGatewayDefaults && (
+                <button
+                  type="button"
+                  className="ui-btn-secondary h-9 px-4 text-xs font-semibold"
+                  onClick={onUseLocalDefaults}
+                >
+                  Use Local Defaults
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    remote: {
+      title: "Remote Access",
+      description: "Access rocCLAW and OpenClaw from anywhere",
+      content: (
+        <div className="space-y-5">
+          <div className="ui-card p-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="ui-card p-2 rounded-lg">
+                <Globe className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">SSH Tunnel Access</p>
+                <p className="text-xs text-muted-foreground">For when Tailscale isn&apos;t set up</p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <CommandBlock label="rocCLAW tunnel" command={rocclawTunnelCommand} copiedCommand={copiedCommand} onCopy={handleCopy} />
+              <CommandBlock label="Gateway tunnel" command={gatewayTunnelCommand} copiedCommand={copiedCommand} onCopy={handleCopy} />
+            </div>
+          </div>
+
+          {installContext.tailscale.loggedIn === false && (
+            <div className="ui-alert-warning rounded-md px-4 py-3 text-sm">
+              Tailscale not detected. Consider setting it up for easier access.
+            </div>
+          )}
+        </div>
+      ),
+    },
+  };
+
+  const currentTab = tabContents[activeTab];
+
   return (
-    <div className="ui-panel ui-depth-workspace flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+    <div className="ui-panel ui-depth-workspace flex h-full min-h-0 flex-1 flex-col">
       {/* Header */}
       <div className="shrink-0 border-b border-border/50 bg-surface-1/30 px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex items-center gap-3">
@@ -221,7 +418,34 @@ export function ConnectionPage({
         </div>
       </div>
 
-      {/* Content */}
+      {/* Tabs */}
+      <div className="shrink-0 border-b border-border/50 px-4 sm:px-6 pt-3 sm:pt-4 overflow-x-auto">
+        <div role="tablist" aria-label="Connection methods" className="flex gap-1 min-w-max">
+          {CONNECTION_TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-t-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  isActive
+                    ? "bg-surface-2 text-foreground border-t border-x border-border"
+                    : "text-muted-foreground hover:text-foreground hover:bg-surface-1/50"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Content - scrollable */}
       <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6">
         <div className="mx-auto max-w-5xl space-y-4 sm:space-y-6">
 
@@ -288,48 +512,16 @@ export function ConnectionPage({
 
           {/* Two-column layout */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            {/* Left Column — Getting Started */}
+            {/* Left Column - Instructions */}
             <div className="space-y-4 sm:space-y-6">
-              <div className="ui-card p-4 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="ui-card p-2 rounded-lg">
-                    <Server className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">Getting Started</p>
-                    <p className="text-xs text-muted-foreground">
-                      {scenario === "same-computer"
-                        ? "rocCLAW and OpenClaw on the same machine"
-                        : scenario === "same-cloud-host"
-                          ? "rocCLAW and OpenClaw on same cloud machine"
-                          : "Connecting to a remote OpenClaw gateway"}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Step 1: Start the gateway */}
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground mb-2">1. Start the gateway</p>
-                  <CommandBlock
-                    command={localGatewayCommand}
-                    copiedCommand={copiedCommand}
-                    onCopy={handleCopy}
-                  />
-                </div>
-
-                {/* Quick actions */}
-                <div className="flex flex-wrap gap-2">
-                  {localGatewayDefaults && (
-                    <button
-                      type="button"
-                      className="ui-btn-secondary h-9 px-4 text-xs font-semibold"
-                      onClick={onUseLocalDefaults}
-                    >
-                      Use Local Defaults
-                    </button>
-                  )}
-                </div>
+              {/* Tab description */}
+              <div className="ui-card p-4">
+                <p className="text-sm font-semibold text-foreground">{currentTab.title}</p>
+                <p className="text-xs text-muted-foreground mt-1">{currentTab.description}</p>
               </div>
+
+              {/* Tab-specific content */}
+              {currentTab.content}
 
               {/* CLI update warning */}
               {installContext.rocclawCli.installed && installContext.rocclawCli.updateAvailable && (
@@ -366,6 +558,7 @@ export function ConnectionPage({
 
             {/* Right Column — Connection Form */}
             <div className="space-y-4 sm:space-y-6">
+              {/* Connection Form */}
               <div className="ui-card p-5 space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="ui-card p-2 rounded-lg">
@@ -387,7 +580,7 @@ export function ConnectionPage({
                       type="text"
                       value={draftGatewayUrl}
                       onChange={(e) => onGatewayUrlChange(e.target.value)}
-                      placeholder={`ws://localhost:${localPort}`}
+                      placeholder={activeTab === "local" ? `ws://localhost:${localPort}` : "wss://gateway.ts.net"}
                       className={`ui-input h-11 w-full rounded-md px-4 text-sm ${urlValidationError ? "border-red-500/60" : ""}`}
                       spellCheck={false}
                       aria-invalid={!!urlValidationError}
@@ -557,98 +750,6 @@ export function ConnectionPage({
               )}
             </div>
           </div>
-
-          {/* Collapsible Advanced Setup */}
-          <div className="ui-card">
-            <button
-              type="button"
-              className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-foreground hover:bg-surface-1/50 rounded-lg"
-              onClick={() => setShowAdvancedSetup((prev) => !prev)}
-              aria-expanded={showAdvancedSetup}
-            >
-              {showAdvancedSetup ? (
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              ) : (
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              )}
-              Advanced Setup
-            </button>
-            {showAdvancedSetup && (
-              <div className="border-t border-border/50 px-4 py-4 space-y-5">
-                {/* SSH Tunnel */}
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Shield className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-sm font-semibold text-foreground">SSH Tunnel</p>
-                  </div>
-                  <div className="space-y-3">
-                    <CommandBlock
-                      label="Gateway tunnel (from your local machine)"
-                      command={gatewayTunnelCommand}
-                      copiedCommand={copiedCommand}
-                      onCopy={handleCopy}
-                    />
-                    <CommandBlock
-                      label="rocCLAW tunnel (from your local machine)"
-                      command={rocclawTunnelCommand}
-                      copiedCommand={copiedCommand}
-                      onCopy={handleCopy}
-                    />
-                  </div>
-                </div>
-
-                {/* Tailscale Serve */}
-                {installContext.tailscale.installed && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Globe className="h-4 w-4 text-muted-foreground" />
-                      <p className="text-sm font-semibold text-foreground">Tailscale Serve</p>
-                    </div>
-                    <div className="space-y-3">
-                      <CommandBlock
-                        label="Expose gateway via Tailscale"
-                        command={gatewayServeCommand}
-                        copiedCommand={copiedCommand}
-                        onCopy={handleCopy}
-                      />
-                      <CommandBlock
-                        label="Expose rocCLAW via Tailscale"
-                        command={rocclawServeCommand}
-                        copiedCommand={copiedCommand}
-                        onCopy={handleCopy}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* rocCLAW remote exposure */}
-                {installContext.rocclawHost.remoteShell && (
-                  <div className="ui-card rounded-md px-4 py-2 text-sm text-muted-foreground">
-                    This rocCLAW is running in a remote shell. Use Tailscale Serve or an SSH tunnel to access it from your browser.
-                  </div>
-                )}
-
-                {/* Gateway config commands */}
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Terminal className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-sm font-semibold text-foreground">Gateway Configuration</p>
-                  </div>
-                  <div className="space-y-3">
-                    {gatewayConfigCommands.map((cmd) => (
-                      <CommandBlock
-                        key={cmd}
-                        command={cmd}
-                        copiedCommand={copiedCommand}
-                        onCopy={handleCopy}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
         </div>
       </div>
     </div>

@@ -31,7 +31,7 @@ test("connection settings save to the rocclaw settings API", async ({ page }) =>
   // Fill token input
   await page.locator('#gateway-token').fill('token-123');
 
-  // Click Connect (renamed from "Save Settings")
+  // Click Connect (primary button when disconnected)
   await page.getByRole("button", { name: "Connect", exact: true }).click();
 
   // Verify the settings persisted
@@ -45,7 +45,7 @@ test("connection settings save to the rocclaw settings API", async ({ page }) =>
   expect(gateway?.token).toBe("token-123");
 });
 
-test("uses local defaults when available", async ({ page }) => {
+test("cloud tab uses local defaults when available", async ({ page }) => {
   const installContext = defaultROCclawInstallContext();
   installContext.rocclawHost.remoteShell = true;
   installContext.tailscale.loggedIn = true;
@@ -79,13 +79,17 @@ test("uses local defaults when available", async ({ page }) => {
   });
 
   await page.goto("/");
-  // "Use Local Defaults" button is in the left column guide, directly visible
+  // Click Cloud tab
+  await page.getByRole("tab", { name: /^Cloud$/ }).click();
+
+  // Should show Cloud tab content
+  await expect(page.getByText("Cloud Setup")).toBeVisible();
   await page.getByRole("button", { name: "Use Local Defaults" }).click();
-  // The Gateway URL input should now have the local defaults applied
+  // The Gateway URL input should have the local defaults applied
   await expect(page.locator('#gateway-url')).toHaveValue("ws://localhost:18789");
 });
 
-test("warns about ws tailscale urls", async ({ page }) => {
+test("client tab warns about ws tailscale urls", async ({ page }) => {
   await stubRocclawRoute(page);
   await stubRuntimeRoutes(page, {
     summary: {
@@ -96,7 +100,8 @@ test("warns about ws tailscale urls", async ({ page }) => {
   });
 
   await page.goto("/");
-  // Fill the URL directly — warnings appear regardless (no tabs)
+  // Click Client tab
+  await page.getByRole("tab", { name: /^Client$/ }).click();
   await page.locator('#gateway-url').fill("ws://gateway-host.ts.net");
   await expect(
     page.getByText(/Use wss:\/\/ for \.ts\.net gateway URLs\./i)

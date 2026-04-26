@@ -139,24 +139,29 @@ describe("ConnectionPage", () => {
     });
   });
 
-  describe("advanced setup", () => {
-    it("is collapsed by default", () => {
+  describe("connection tabs", () => {
+    it("shows Local tab content by default for local gateway URL", () => {
       render(createElement(ConnectionPage, buildProps()));
 
-      const advancedButton = screen.getByRole("button", { name: "Advanced Setup" });
-      expect(advancedButton).toHaveAttribute("aria-expanded", "false");
-      // SSH tunnel content should not be visible
-      expect(screen.queryByText("SSH Tunnel")).not.toBeInTheDocument();
+      expect(screen.getByText("Local Connection")).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /^Local$/ })).toHaveAttribute("aria-selected", "true");
     });
 
-    it("expands when clicked", () => {
+    it("switches to Client tab when clicked", () => {
       render(createElement(ConnectionPage, buildProps()));
 
-      const advancedButton = screen.getByRole("button", { name: "Advanced Setup" });
-      fireEvent.click(advancedButton);
+      fireEvent.click(screen.getByRole("tab", { name: /^Client$/ }));
 
-      expect(advancedButton).toHaveAttribute("aria-expanded", "true");
-      expect(screen.getByText("SSH Tunnel")).toBeInTheDocument();
+      expect(screen.getByText("Client Connection")).toBeInTheDocument();
+    });
+
+    it("shows all four tabs", () => {
+      render(createElement(ConnectionPage, buildProps()));
+
+      expect(screen.getByRole("tab", { name: /^Local$/ })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /^Client$/ })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /^Cloud$/ })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /^Remote$/ })).toBeInTheDocument();
     });
   });
 
