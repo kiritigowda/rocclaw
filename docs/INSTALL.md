@@ -173,52 +173,369 @@ npm run rocclaw:setup -- --force
 
 ## Remote Access
 
-rocCLAW binds to loopback (`127.0.0.1` / `::1`) by default, so it is not reachable from other machines. Two methods for remote access:
+rocCLAW binds to loopback (`127.0.0.1` / `::1`) by default, so it is not reachable from other machines. Two methods for remote access are documented below: SSH tunnels and Tailscale.
 
-### Tailscale Serve (recommended)
+---
 
-Tailscale exposes rocCLAW over HTTPS on your tailnet with no port forwarding or firewall changes.
+### Method A: SSH Tunnels
+
+SSH tunnels are the simplest way to access a remote rocCLAW instance. They require no extra software on the remote host — just an SSH server. All traffic is encrypted through the SSH connection.
+
+#### How it works
+
+```
+Your laptop                          Remote server
+┌────────────┐   SSH tunnel          ┌─────────────────────┐
+│ Browser    │──────────────────────▶│ rocCLAW (:3000)     │
+│ :3000      │                       │ Gateway (:18789)    │
+└────────────┘                       └─────────────────────┘
+```
+
+SSH `-L` (local forwarding) binds a port on your local machine and forwards all traffic through the SSH connection to a port on the remote host.
+
+#### Scenario 1: rocCLAW and gateway on the same remote machine
+
+Forward both ports in a single SSH command:
 
 ```bash
-# Install Tailscale (if not already installed)
+ssh -L 3000:127.0.0.1:3000 -L 18789:127.0.0.1:18789 user@remote-host
+```
+
+Then open `http://localhost:3000` in your local browser. rocCLAW connects to the gateway via `ws://localhost:18789`, which the tunnel forwards to the remote host.
+
+#### Scenario 2: rocCLAW on one host, gateway on another
+
+Forward each port to its respective host:
+
+```bash
+# Terminal 1: Forward rocCLAW
+ssh -L 3000:127.0.0.1:3000 user@rocclaw-host
+
+# Terminal 2: Forward the gateway
+ssh -L 18789:127.0.0.1:18789 user@gateway-host
+```
+
+Or, if you can reach the gateway host from the rocCLAW host:
+
+```bash
+# Single command — forward rocCLAW directly, gateway via jump
+ssh -L 3000:127.0.0.1:3000 -L 18789:<gateway-host-ip>:18789 user@rocclaw-host
+```
+
+#### Scenario 3: Forward only the gateway (rocCLAW runs locally)
+
+If you run rocCLAW on your local machine and only the gateway is remote:
+
+```bash
+ssh -L 18789:127.0.0.1:18789 user@gateway-host
+```
+
+Then set the gateway URL in rocCLAW to `ws://localhost:18789`.
+
+#### SSH flags reference
+
+| Flag | Meaning |
+|------|---------|
+| `-L local:remote_host:remote` | Forward `local` port to `remote_host:remote` through the SSH connection |
+| `-N` | Don't open a shell — just forward ports |
+| `-f` | Run in background after authentication |
+| `-o ServerAliveInterval=30` | Send a keepalive every 30 seconds to prevent idle disconnects |
+| `-o ExitOnForwardFailure=yes` | Exit if the port forward fails (e.g., port already in use) |
+
+**Recommended one-liner** (background, keepalive, fail-fast):
+
+```bash
+ssh -f -N \
+  -o ServerAliveInterval=30 \
+  -o ExitOnForwardFailure=yes \
+  -L 3000:127.0.0.1:3000 \
+  -L 18789:127.0.0.1:18789 \
+  user@remote-host
+```
+
+#### Persistent tunnels with autossh
+
+`autossh` monitors the SSH connection and restarts it automatically if it drops. This is essential for long-running setups.
+
+**Install:**
+
+```bash
+# Ubuntu / Debian
+sudo apt install -y autossh
+
+# macOS
+brew install autossh
+```
+
+**Run:**
+
+```bash
+autossh -M 0 -f -N \
+  -o ServerAliveInterval=30 \
+  -o ServerAliveCountMax=3 \
+  -L 3000:127.0.0.1:3000 \
+  -L 18789:127.0.0.1:18789 \
+  user@remote-host
+```
+
+- `-M 0` disables autossh's built-in monitoring port and relies on SSH's `ServerAliveInterval` instead (recommended for modern OpenSSH).
+- `-f` runs in the background after connecting.
+- `ServerAliveCountMax=3` means the tunnel restarts after 3 missed keepalives (90 seconds).
+
+#### Persistent tunnels with systemd
+
+For a tunnel that starts on boot and restarts on failure, create a systemd user service:
+
+```bash
+mkdir -p ~/.config/systemd/user
+```
+
+Create `~/.config/systemd/user/rocclaw-tunnel.service`:
+
+```ini
+[Unit]
+Description=SSH tunnel to rocCLAW and OpenClaw gateway
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/ssh -N \
+  -o ServerAliveInterval=30 \
+  -o ServerAliveCountMax=3 \
+  -o ExitOnForwardFailure=yes \
+  -L 3000:127.0.0.1:3000 \
+  -L 18789:127.0.0.1:18789 \
+  user@remote-host
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+```
+
+Enable and start:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable rocclaw-tunnel
+systemctl --user start rocclaw-tunnel
+
+# Check status
+systemctl --user status rocclaw-tunnel
+
+# View logs
+journalctl --user -u rocclaw-tunnel -f
+```
+
+> **Note**: For systemd services, SSH key-based authentication is required (no interactive password prompts). See the next section.
+
+#### SSH key-based authentication
+
+Password prompts don't work with background tunnels. Set up key-based auth:
+
+```bash
+# Generate a key (if you don't have one)
+ssh-keygen -t ed25519 -C "rocclaw-tunnel"
+
+# Copy the public key to the remote host
+ssh-copy-id user@remote-host
+
+# Test — should connect without a password prompt
+ssh -o BatchMode=yes user@remote-host echo "Key auth works"
+```
+
+#### Stopping SSH tunnels
+
+```bash
+# Find the tunnel process
+ps aux | grep 'ssh.*-L.*3000'
+
+# Kill by PID
+kill <pid>
+
+# Or kill all SSH tunnels to a specific host
+pkill -f 'ssh.*remote-host'
+
+# If using systemd
+systemctl --user stop rocclaw-tunnel
+```
+
+---
+
+### Method B: Tailscale
+
+Tailscale is a mesh VPN built on WireGuard that gives every device a stable DNS name and encrypted connectivity. It requires no port forwarding, no firewall rules, and no SSH tunnels. Tailscale is optional but recommended for teams or multi-device setups.
+
+#### How it works
+
+```
+Your laptop                    Tailscale network                Remote server
+┌────────────┐                                                  ┌─────────────────────┐
+│ Browser    │◀──── encrypted WireGuard tunnel ────────────────▶│ rocCLAW (:3000)     │
+│            │    my-server.tailnet-name.ts.net                  │ Gateway (:18789)    │
+└────────────┘                                                  └─────────────────────┘
+```
+
+Every machine on the tailnet gets a DNS name like `my-server.tailnet-name.ts.net` and a stable 100.x.x.x IP address.
+
+#### Step 1: Install Tailscale
+
+Install on **every machine** that needs to communicate (your laptop, the rocCLAW host, the gateway host):
+
+```bash
+# Ubuntu / Debian
 curl -fsSL https://tailscale.com/install.sh | sh
 sudo tailscale up
 
-# Serve rocCLAW over HTTPS on port 443
-tailscale serve --yes --bg --https 443 http://127.0.0.1:3000
+# macOS
+brew install --cask tailscale
+# Then open Tailscale from Applications and sign in
 
-# Find your tailnet hostname
+# Other Linux
+# See https://tailscale.com/download/linux
+```
+
+After `tailscale up`, it opens a browser to authenticate with your Tailscale account (Google, Microsoft, GitHub, etc.).
+
+#### Step 2: Verify connectivity
+
+```bash
+# Check your tailnet status
 tailscale status
+
+# Example output:
+# 100.64.0.1   my-laptop        yourname@  linux  -
+# 100.64.0.2   gpu-server       yourname@  linux  -
+
+# Ping another device by tailnet name
+tailscale ping gpu-server
 ```
 
-Open `https://<your-machine>.your-tailnet.ts.net` from any device on your tailnet.
+#### Step 3: Expose rocCLAW with Tailscale Serve
 
-If the gateway is on a different machine, also forward the gateway port:
+Tailscale Serve lets you expose a local service over HTTPS on your tailnet with automatic TLS certificates.
+
+On the **rocCLAW host**:
 
 ```bash
-# On the gateway host
-tailscale serve --yes --bg --tcp 18789 tcp://127.0.0.1:18789
+# Expose rocCLAW (port 3000) over HTTPS on port 443
+tailscale serve --bg --https 443 http://127.0.0.1:3000
+
+# Verify it's serving
+tailscale serve status
 ```
 
-Then set the gateway URL in rocCLAW to `ws://<gateway-host>.your-tailnet.ts.net:18789`.
+Then open `https://<rocclaw-host>.tailnet-name.ts.net` from any device on your tailnet.
 
-### SSH tunnel
+#### Step 4: Expose the gateway (if on a different machine)
 
-Forward the rocCLAW port from your local machine to the remote host:
+If the OpenClaw gateway runs on a different machine:
+
+On the **gateway host**:
 
 ```bash
-# Forward rocCLAW (port 3000)
-ssh -L 3000:127.0.0.1:3000 user@remote-host
+# Expose the gateway WebSocket port
+tailscale serve --bg --tcp 18789 tcp://127.0.0.1:18789
 ```
 
-Then open `http://localhost:3000` in your local browser.
+Then set the gateway URL in rocCLAW to:
 
-If the gateway is on a different machine from rocCLAW, also forward the gateway port:
+```
+wss://<gateway-host>.tailnet-name.ts.net
+```
+
+> **Note**: When using Tailscale Serve with HTTPS, use `wss://` (secure WebSocket) instead of `ws://`.
+
+#### Step 5: Find your tailnet DNS name
 
 ```bash
-# Forward both rocCLAW and the gateway
-ssh -L 3000:127.0.0.1:3000 -L 18789:127.0.0.1:18789 user@remote-host
+# Full DNS name
+tailscale status --json | jq -r '.Self.DNSName'
+
+# Or just the hostname part
+tailscale status --json | jq -r '.Self.HostName'
 ```
+
+The DNS name format is: `<hostname>.<tailnet-name>.ts.net`
+
+#### Access Control Lists (ACLs)
+
+By default, all devices on your tailnet can reach each other. For tighter security, use Tailscale ACLs to restrict which devices can access rocCLAW:
+
+1. Go to [Tailscale Admin Console](https://login.tailscale.com/admin/acls)
+2. Add rules like:
+
+```json
+{
+  "acls": [
+    {
+      "action": "accept",
+      "src": ["tag:admin"],
+      "dst": ["tag:rocclaw:3000", "tag:rocclaw:18789"]
+    }
+  ],
+  "tagOwners": {
+    "tag:admin": ["yourname@example.com"],
+    "tag:rocclaw": ["yourname@example.com"]
+  }
+}
+```
+
+3. Tag your devices:
+
+```bash
+# On the rocCLAW host
+sudo tailscale up --advertise-tags=tag:rocclaw
+```
+
+#### Tailscale + same-machine setup
+
+If both rocCLAW and the gateway are on the same machine and you only need Tailscale for remote access to the rocCLAW UI:
+
+```bash
+# Only expose rocCLAW — the gateway stays on localhost
+tailscale serve --bg --https 443 http://127.0.0.1:3000
+```
+
+Set the gateway URL in rocCLAW to `ws://localhost:18789` (no Tailscale needed for the gateway connection since they're on the same host).
+
+#### Stopping Tailscale Serve
+
+```bash
+# Remove a specific serve rule
+tailscale serve --https 443 off
+
+# Remove all serve rules
+tailscale serve reset
+
+# Check what's being served
+tailscale serve status
+```
+
+#### Tailscale troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| `tailscale up` hangs | Check if a firewall blocks UDP 41641. Tailscale uses WireGuard which needs UDP connectivity. |
+| DNS name not resolving | Run `tailscale status` to verify the device is online. Check that MagicDNS is enabled in the admin console. |
+| `wss://` connection fails | Ensure you're using `wss://` (not `ws://`) when connecting through Tailscale Serve HTTPS. |
+| Certificate errors | Tailscale auto-provisions Let's Encrypt certs. Wait a minute after `tailscale serve` and retry. |
+| Can't reach device | Check ACLs in the admin console. Default policy allows all traffic, but custom ACLs may block it. |
+
+---
+
+### Choosing between SSH and Tailscale
+
+| Factor | SSH tunnels | Tailscale |
+|--------|-------------|-----------|
+| **Setup effort** | None (SSH is already available) | Install on each device + sign in |
+| **Extra software** | None (autossh optional) | Tailscale client on every device |
+| **DNS names** | No — use IP addresses | Yes — stable `*.ts.net` names |
+| **TLS/HTTPS** | No — HTTP over tunnel | Yes — automatic certificates |
+| **Multi-device** | One tunnel per device | All devices on the tailnet connect directly |
+| **Firewall/NAT** | Requires SSH access (port 22) | Works through most NATs without port forwarding |
+| **Persistence** | Manual (autossh/systemd) | Automatic (daemon runs on boot) |
+| **Best for** | Single user, existing SSH access | Teams, multiple devices, long-term setups |
 
 ---
 

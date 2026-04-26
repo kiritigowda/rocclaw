@@ -11,8 +11,6 @@ import {
   EyeOff,
   Loader2,
   Monitor,
-  Cloud,
-  Globe,
   Server,
   Shield,
   Key,
@@ -38,8 +36,8 @@ type ConnectionTab = "local" | "client" | "cloud" | "remote";
 const CONNECTION_TABS: { id: ConnectionTab; label: string; icon: typeof Monitor }[] = [
   { id: "local", label: "Local", icon: Monitor },
   { id: "client", label: "Client", icon: Server },
-  { id: "cloud", label: "Cloud", icon: Cloud },
-  { id: "remote", label: "Remote", icon: Globe },
+  { id: "cloud", label: "Cloud", icon: Terminal },
+  { id: "remote", label: "Remote", icon: Shield },
 ];
 
 export interface ConnectionPageProps {
@@ -154,16 +152,10 @@ export function ConnectionPage({
   );
 
   const localGatewayCommand = `openclaw gateway --port ${localPort}`;
-  const gatewayServeCommand = `tailscale serve --yes --bg --https 443 http://127.0.0.1:${localPort}`;
-  const rocclawServeCommand = "tailscale serve --yes --bg --https 443 http://127.0.0.1:3000";
 
-  const rocclawOpenUrl = installContext.tailscale.loggedIn && installContext.tailscale.dnsName
-    ? `https://${installContext.tailscale.dnsName}`
-    : "https://<rocclaw-host>.ts.net";
-
-  const rocclawSshTarget = installContext.tailscale.dnsName || "<rocclaw-host>";
-  const rocclawTunnelCommand = `ssh -L 3000:127.0.0.1:3000 ${rocclawSshTarget}`;
+  const rocclawTunnelCommand = "ssh -L 3000:127.0.0.1:3000 user@<remote-host>";
   const gatewayTunnelCommand = `ssh -L ${localPort}:127.0.0.1:${localPort} user@<gateway-host>`;
+  const combinedTunnelCommand = `ssh -L 3000:127.0.0.1:3000 -L ${localPort}:127.0.0.1:${localPort} user@<remote-host>`;
 
   const warnings = useMemo<ROCclawConnectionWarning[]>(() => {
     return resolveGatewayConnectionWarnings({
@@ -275,7 +267,7 @@ export function ConnectionPage({
     },
     client: {
       title: "Client Connection",
-      description: "Local rocCLAW connecting to remote OpenClaw",
+      description: "Local rocCLAW connecting to remote OpenClaw via SSH",
       content: (
         <div className="space-y-5">
           <div className="ui-card p-4">
@@ -284,14 +276,22 @@ export function ConnectionPage({
                 <Server className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-foreground">On Gateway Host</p>
-                <p className="text-xs text-muted-foreground">Expose OpenClaw with Tailscale</p>
+                <p className="text-sm font-semibold text-foreground">SSH Tunnel to Gateway</p>
+                <p className="text-xs text-muted-foreground">Forward the gateway port to your local machine</p>
               </div>
             </div>
-            <CommandBlock command={gatewayServeCommand} copiedCommand={copiedCommand} onCopy={handleCopy} />
+            <CommandBlock label="Run on your local machine" command={gatewayTunnelCommand} copiedCommand={copiedCommand} onCopy={handleCopy} />
             <p className="text-xs text-muted-foreground mt-3">
-              Then enter <code className="font-mono">wss://&lt;gateway-host&gt;.ts.net</code> in the URL field.
+              This forwards the remote gateway port to <code className="font-mono">localhost:{localPort}</code>.
+              Replace <code className="font-mono">user@&lt;gateway-host&gt;</code> with your SSH login.
             </p>
+            <button
+              type="button"
+              className="ui-btn-secondary h-9 px-4 text-xs font-semibold mt-3"
+              onClick={applyLoopbackUrl}
+            >
+              Use localhost:{localPort}
+            </button>
           </div>
 
           <div className="ui-card p-4">
@@ -300,54 +300,34 @@ export function ConnectionPage({
                 <Shield className="h-5 w-5 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-foreground">Fallback: SSH Tunnel</p>
-                <p className="text-xs text-muted-foreground">If Tailscale is not available</p>
+                <p className="text-sm font-semibold text-foreground">Persistent Tunnel</p>
+                <p className="text-xs text-muted-foreground">Keep the tunnel alive with autossh</p>
               </div>
             </div>
-            <CommandBlock command={gatewayTunnelCommand} copiedCommand={copiedCommand} onCopy={handleCopy} />
-            <button
-              type="button"
-              className="ui-btn-secondary h-9 px-4 text-xs font-semibold mt-3"
-              onClick={applyLoopbackUrl}
-            >
-              Use SSH Tunnel URL
-            </button>
+            <CommandBlock command={`autossh -M 0 -f -N -L ${localPort}:127.0.0.1:${localPort} user@<gateway-host>`} copiedCommand={copiedCommand} onCopy={handleCopy} />
+            <p className="text-xs text-muted-foreground mt-3">
+              Install with <code className="font-mono">sudo apt install autossh</code>. The tunnel auto-reconnects on failure.
+            </p>
           </div>
         </div>
       ),
     },
     cloud: {
       title: "Cloud Setup",
-      description: "rocCLAW and OpenClaw on same cloud machine",
+      description: "rocCLAW and OpenClaw on same cloud/remote machine",
       content: (
         <div className="space-y-5">
           <div className="ui-card p-4">
             <div className="flex items-center gap-3 mb-4">
               <div className="ui-card p-2 rounded-lg">
-                <Cloud className="h-5 w-5 text-primary" />
+                <Terminal className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-foreground">Expose rocCLAW</p>
-                <p className="text-xs text-muted-foreground">Make rocCLAW accessible via Tailscale</p>
+                <p className="text-sm font-semibold text-foreground">Start Both Services</p>
+                <p className="text-xs text-muted-foreground">Run on the cloud machine</p>
               </div>
             </div>
-            <CommandBlock command={rocclawServeCommand} copiedCommand={copiedCommand} onCopy={handleCopy} />
-            <p className="text-xs text-muted-foreground mt-3">
-              Then open <code className="font-mono">{rocclawOpenUrl}</code>
-            </p>
-          </div>
-
-          <div className="ui-card p-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="ui-card p-2 rounded-lg">
-                <Server className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground">Start OpenClaw</p>
-                <p className="text-xs text-muted-foreground">On the same cloud machine</p>
-              </div>
-            </div>
-            <CommandBlock command={localGatewayCommand} copiedCommand={copiedCommand} onCopy={handleCopy} />
+            <CommandBlock label="Start the gateway" command={localGatewayCommand} copiedCommand={copiedCommand} onCopy={handleCopy} />
             <div className="flex gap-2 mt-3">
               <button
                 type="button"
@@ -367,35 +347,63 @@ export function ConnectionPage({
               )}
             </div>
           </div>
+
+          <div className="ui-card p-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="ui-card p-2 rounded-lg">
+                <Shield className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Access via SSH Tunnel</p>
+                <p className="text-xs text-muted-foreground">Forward both ports to your local machine</p>
+              </div>
+            </div>
+            <CommandBlock label="Run on your local machine" command={combinedTunnelCommand} copiedCommand={copiedCommand} onCopy={handleCopy} />
+            <p className="text-xs text-muted-foreground mt-3">
+              Then open <code className="font-mono">http://localhost:3000</code> in your local browser.
+              Both rocCLAW and the gateway are forwarded through the SSH tunnel.
+            </p>
+          </div>
         </div>
       ),
     },
     remote: {
       title: "Remote Access",
-      description: "Access rocCLAW and OpenClaw from anywhere",
+      description: "Access rocCLAW and OpenClaw from anywhere via SSH",
       content: (
         <div className="space-y-5">
           <div className="ui-card p-4">
             <div className="flex items-center gap-3 mb-4">
               <div className="ui-card p-2 rounded-lg">
-                <Globe className="h-5 w-5 text-primary" />
+                <Shield className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-foreground">SSH Tunnel Access</p>
-                <p className="text-xs text-muted-foreground">For when Tailscale isn&apos;t set up</p>
+                <p className="text-sm font-semibold text-foreground">SSH Tunnel — Both Ports</p>
+                <p className="text-xs text-muted-foreground">Forward rocCLAW and the gateway to your local machine</p>
               </div>
             </div>
-            <div className="space-y-3">
-              <CommandBlock label="rocCLAW tunnel" command={rocclawTunnelCommand} copiedCommand={copiedCommand} onCopy={handleCopy} />
-              <CommandBlock label="Gateway tunnel" command={gatewayTunnelCommand} copiedCommand={copiedCommand} onCopy={handleCopy} />
+            <CommandBlock label="Combined tunnel (recommended)" command={combinedTunnelCommand} copiedCommand={copiedCommand} onCopy={handleCopy} />
+            <div className="space-y-3 mt-4">
+              <CommandBlock label="Or forward separately — rocCLAW" command={rocclawTunnelCommand} copiedCommand={copiedCommand} onCopy={handleCopy} />
+              <CommandBlock label="And gateway" command={gatewayTunnelCommand} copiedCommand={copiedCommand} onCopy={handleCopy} />
             </div>
           </div>
 
-          {installContext.tailscale.loggedIn === false && (
-            <div className="ui-alert-warning rounded-md px-4 py-3 text-sm">
-              Tailscale not detected. Consider setting it up for easier access.
+          <div className="ui-card p-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="ui-card p-2 rounded-lg">
+                <Zap className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Persistent Tunnel</p>
+                <p className="text-xs text-muted-foreground">Auto-reconnect with autossh</p>
+              </div>
             </div>
-          )}
+            <CommandBlock command={`autossh -M 0 -f -N -L 3000:127.0.0.1:3000 -L ${localPort}:127.0.0.1:${localPort} user@<remote-host>`} copiedCommand={copiedCommand} onCopy={handleCopy} />
+            <p className="text-xs text-muted-foreground mt-3">
+              After connecting, open <code className="font-mono">http://localhost:3000</code> in your local browser.
+            </p>
+          </div>
         </div>
       ),
     },
@@ -404,7 +412,7 @@ export function ConnectionPage({
   const currentTab = tabContents[activeTab];
 
   return (
-    <div className="ui-panel ui-depth-workspace flex h-full min-h-0 flex-1 flex-col">
+    <div className="ui-panel ui-depth-workspace flex min-h-0 flex-1 flex-col">
       {/* Header */}
       <div className="shrink-0 border-b border-border/50 bg-surface-1/30 px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex items-center gap-3">
@@ -580,7 +588,7 @@ export function ConnectionPage({
                       type="text"
                       value={draftGatewayUrl}
                       onChange={(e) => onGatewayUrlChange(e.target.value)}
-                      placeholder={activeTab === "local" ? `ws://localhost:${localPort}` : "wss://gateway.ts.net"}
+                      placeholder={`ws://localhost:${localPort}`}
                       className={`ui-input h-11 w-full rounded-md px-4 text-sm ${urlValidationError ? "border-red-500/60" : ""}`}
                       spellCheck={false}
                       aria-invalid={!!urlValidationError}
