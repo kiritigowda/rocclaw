@@ -18,21 +18,21 @@ test("connection settings save to the rocclaw settings API", async ({ page }) =>
   });
 
   await page.goto("/");
-  
+
   // Connection tab should be visible when disconnected
   await page.waitForLoadState("networkidle");
-  
+
   // Wait for the form to be visible - Connection tab auto-shows when disconnected
   await expect(page.getByText("Gateway URL & Token")).toBeVisible({ timeout: 5000 });
-  
+
   // Fill URL input - use CSS id selector
   await page.locator('#gateway-url').fill('ws://gateway.example:18789');
-  
+
   // Fill token input
   await page.locator('#gateway-token').fill('token-123');
 
-  // Click save
-  await page.getByRole("button", { name: "Save Settings" }).click();
+  // Click Connect (renamed from "Save Settings")
+  await page.getByRole("button", { name: "Connect" }).click();
 
   // Verify the settings persisted
   const savedSettings = await page.evaluate(async () => {
@@ -45,7 +45,7 @@ test("connection settings save to the rocclaw settings API", async ({ page }) =>
   expect(gateway?.token).toBe("token-123");
 });
 
-test("cloud tab uses local defaults when available", async ({ page }) => {
+test("uses local defaults when available", async ({ page }) => {
   const installContext = defaultROCclawInstallContext();
   installContext.rocclawHost.remoteShell = true;
   installContext.tailscale.loggedIn = true;
@@ -79,17 +79,13 @@ test("cloud tab uses local defaults when available", async ({ page }) => {
   });
 
   await page.goto("/");
-  // Connection tab is active by default - click Cloud tab
-  await page.getByRole("tab", { name: /^Cloud$/ }).click();
-  
-  // Should show Cloud tab content
-  await expect(page.getByText("Cloud Setup")).toBeVisible();
+  // "Use Local Defaults" button is in the left column guide, directly visible
   await page.getByRole("button", { name: "Use Local Defaults" }).click();
-  // The Gateway URL input is in the right column - when Cloud tab is active, placeholder is wss://gateway.ts.net
-  await expect(page.getByPlaceholder(/wss:\/\/gateway.ts.net/)).toHaveValue("ws://localhost:18789");
+  // The Gateway URL input should now have the local defaults applied
+  await expect(page.locator('#gateway-url')).toHaveValue("ws://localhost:18789");
 });
 
-test("client tab warns about ws tailscale urls", async ({ page }) => {
+test("warns about ws tailscale urls", async ({ page }) => {
   await stubRocclawRoute(page);
   await stubRuntimeRoutes(page, {
     summary: {
@@ -100,9 +96,8 @@ test("client tab warns about ws tailscale urls", async ({ page }) => {
   });
 
   await page.goto("/");
-  // Connection tab is active by default - click Client tab
-  await page.getByRole("tab", { name: /^Client$/ }).click();
-  await page.getByPlaceholder(/wss:\/\/gateway.ts.net/).fill("ws://gateway-host.ts.net");
+  // Fill the URL directly — warnings appear regardless (no tabs)
+  await page.locator('#gateway-url').fill("ws://gateway-host.ts.net");
   await expect(
     page.getByText(/Use wss:\/\/ for \.ts\.net gateway URLs\./i)
   ).toBeVisible();
