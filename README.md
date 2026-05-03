@@ -18,22 +18,24 @@ The operator dashboard for [OpenClaw](https://github.com/openclaw) — manage a 
 
 ## Table of Contents
 
-- [Why rocCLAW?](#-why-rocclaw)
-- [Quick Start](#-quick-start)
-- [Local + Cloud Hybrid Fleet](#-local--cloud-hybrid-fleet)
-- [What You Can Do](#-what-you-can-do)
-- [Monitor Your Hardware](#-monitor-your-hardware)
-- [Built-in Skills](#-built-in-skills)
-- [Use Cases](#-use-cases)
-- [Dashboard at a Glance](#-dashboard-at-a-glance)
-- [Installation](#-installation)
-- [Setup Guides](#-setup-guides)
-- [Requirements & Compatibility](#-requirements--compatibility)
-- [Development](#-development)
-- [Troubleshooting](#-troubleshooting)
-- [Documentation](#-documentation)
+- [Why rocCLAW?](#why-rocclaw)
+- [Quick Start](#quick-start)
+- [Local + Cloud Hybrid Fleet](#local--cloud-hybrid-fleet)
+- [What You Can Do](#what-you-can-do)
+- [Monitor Your Hardware](#monitor-your-hardware)
+- [Built-in Skills](#built-in-skills)
+- [Use Cases](#use-cases)
+- [Dashboard at a Glance](#dashboard-at-a-glance)
+- [Installation](#installation)
+- [Setup Guides](#setup-guides)
+- [Requirements & Compatibility](#requirements--compatibility)
+- [Development](#development)
+- [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
 
 ---
+
+<a id="why-rocclaw"></a>
 
 ## 🤖 Why rocCLAW?
 
@@ -50,52 +52,56 @@ The problem: running agents around the clock on cloud models gets expensive. If 
 Point rocCLAW at any OpenClaw gateway — on your desk, across the network, or SSH-tunneled from a remote server — and your entire fleet is right there. Chat, configure, schedule, monitor. No SSH, no terminal juggling, no guessing what your agents are doing.
 
 ```
-Browser (React)  <── HTTP / SSE ──>  rocCLAW Server  <── WebSocket ──>  OpenClaw Gateway
-                                     (Next.js + SQLite)                  (local GPU / cloud API)
+Browser  ←── HTTP / SSE ──→  rocCLAW Server  ←── WebSocket ──→  OpenClaw Gateway
+(React)                      (Next.js + SQLite)                  (local GPU / cloud API)
 ```
 
 Your browser never talks to the gateway directly. rocCLAW proxies everything securely — authentication, event replay, rate limiting — and your tokens never leave the server.
 
 ---
 
+<a id="quick-start"></a>
+
 ## 🚀 Quick Start
 
 **Prerequisites:** Node.js 20.9+ and a running OpenClaw gateway.
 
-Install via npm, pre-built package, or from source — see [Installation](#-installation) for all options.
+Install via npm, pre-built package, or from source — see [Installation](#installation) for all options.
 
 ```bash
 npm install -g @simoncatbot/rocclaw
 rocclaw
 ```
 
-Open [http://localhost:3000](http://localhost:3000), enter your gateway URL (`ws://127.0.0.1:18789`), paste your token, and click **Save Settings**.
+Open [http://localhost:3000](http://localhost:3000), enter your gateway URL (`ws://127.0.0.1:18789`), paste your token, and click **Connect**.
 
 ```bash
 openclaw config get gateway.auth.token   # Get your token
 ```
 
-See also: [full install guide](docs/INSTALL.md) · [setup guides →](#-setup-guides)
+See also: [full install guide](docs/INSTALL.md) · [setup guides →](#setup-guides)
 
 ---
 
-## 🏗️ Local + Cloud Hybrid Fleet
+<a id="local--cloud-hybrid-fleet"></a>
 
-Not every task needs a cloud model. Run local LLMs for the bulk of the work and reserve cloud tokens for what actually needs them.
+## 🏗️ Local + Cloud Hybrid Fleet
 
 <!-- TODO: Add screenshot showing the token usage dashboard with per-agent/per-model breakdown -->
 
 **Local agents** run on your hardware with open-weight models via [Ollama](https://ollama.com), vLLM, or any local provider. They handle the predictable workload — log monitoring, scheduled reports, file processing, data syncing, health checks. Zero token cost, and they retain memory across sessions so they improve without burning cloud credits.
 
-**Cloud agents** use high-capability models (Claude, GPT, Gemini) for the hard stuff — complex reasoning, multi-step planning, code generation that needs deep context. You only pay when you need the horsepower.
+**Cloud agents** use high-capability models (Claude, GPT, Gemini) for tasks that need it — complex reasoning, multi-step planning, code generation with deep context.
 
-**Per-agent model selection** — Assign each agent exactly the model it needs. Your cron agent runs locally on Kimi K2. Your planning agent calls Claude. Pair it with the right [built-in skills](#-built-in-skills) — Plan First and Agent Debate for cloud agents, ReAct Loop and GitHub for local. Mix and match.
+**Per-agent model selection** — Assign each agent exactly the model it needs. Your cron agent runs locally on Kimi K2. Your planning agent calls Claude. Pair it with the right [built-in skills](#built-in-skills) — Plan First and Agent Debate for cloud agents, ReAct Loop and GitHub for local. Mix and match.
 
-**Token usage dashboards** — See spend per agent, per model, in real time. Know exactly which agents are consuming cloud tokens and whether they should be. No surprise bills.
+**Token usage dashboards** — See spend per agent, per model, in real time. Know exactly which agents are consuming cloud tokens and whether they should be.
 
-**The result:** maximum hardware utilization, minimum cloud spend. Your local GPUs run warm instead of idle. Your cloud tokens go to tasks that actually need them.
+**The result:** maximum hardware utilization, minimum cloud spend. Your local GPUs stay utilized instead of idle. Cloud tokens go only to tasks that need them.
 
 ---
+
+<a id="what-you-can-do"></a>
 
 ## ⚡ What You Can Do
 
@@ -124,6 +130,8 @@ Not every task needs a cloud model. Run local LLMs for the bulk of the work and 
 
 ---
 
+<a id="monitor-your-hardware"></a>
+
 ## 📊 Monitor Your Hardware
 
 <!-- TODO: Add screenshot showing system metrics and graph view -->
@@ -134,9 +142,11 @@ When your agents run on local hardware, you need to see how that hardware is doi
 
 **Time-series graphs** — Track resource usage over 5m, 10m, or 30m windows. Spot bottlenecks, see when your GPU is maxed out, and decide whether a task should move to cloud.
 
-**AMD GPU support** — ROCm-first detection with automatic sysfs fallback. Full metrics for AMD GPUs including VRAM, temperature, power draw, and clock speeds. See [Requirements & Compatibility](#-requirements--compatibility) for details.
+**AMD GPU support** — ROCm-first detection with automatic sysfs fallback. Full metrics for AMD GPUs including VRAM, temperature, power draw, and clock speeds. See [Requirements & Compatibility](#requirements--compatibility) for details.
 
 ---
+
+<a id="built-in-skills"></a>
 
 ## 🧠 Built-in Skills
 
@@ -173,6 +183,8 @@ Skills are **per-agent** — assign different combinations to each agent to matc
 
 ---
 
+<a id="use-cases"></a>
+
 ## 💡 Use Cases
 
 <div align="center">
@@ -188,6 +200,8 @@ A hybrid fleet makes sense anywhere you have repetitive work alongside tasks tha
 - **Research & analysis** — Local agents collect data, scrape sources on a schedule, and organize findings into structured formats. Cloud agents synthesize across sources, identify patterns, and produce the final analysis.
 
 ---
+
+<a id="dashboard-at-a-glance"></a>
 
 ## 📋 Dashboard at a Glance
 
@@ -209,6 +223,8 @@ A hybrid fleet makes sense anywhere you have repetitive work alongside tasks tha
 
 ---
 
+<a id="installation"></a>
+
 ## 📦 Installation
 
 ### npm (recommended)
@@ -226,7 +242,7 @@ Download from [GitHub Releases](https://github.com/simoncatbot/rocclaw/releases)
 # Linux/macOS
 curl -L -o rocclaw.tar.gz https://github.com/simoncatbot/rocclaw/releases/latest/download/rocclaw-linux-x64.tar.gz
 tar -xzf rocclaw.tar.gz && cd rocclaw
-npm ci --include=dev && node server/index.js
+npm install && node server/index.js
 ```
 
 ### From source
@@ -241,6 +257,8 @@ npm run dev
 For detailed Ubuntu setup with SSH tunnels, Tailscale, and environment variables, see the [full install guide](docs/INSTALL.md).
 
 ---
+
+<a id="setup-guides"></a>
 
 ## 🔧 Setup Guides
 
@@ -294,6 +312,8 @@ Keep the terminal open, then connect rocCLAW to `ws://localhost:18789`.
 
 ---
 
+<a id="requirements--compatibility"></a>
+
 ## ✅ Requirements & Compatibility
 
 | Requirement | Version |
@@ -306,6 +326,8 @@ Keep the terminal open, then connect rocCLAW to `ws://localhost:18789`.
 For supported platforms and GPU compatibility details, see [Compatibility](docs/COMPATIBILITY.md).
 
 ---
+
+<a id="development"></a>
 
 ## 🛠️ Development
 
@@ -329,6 +351,8 @@ See [Contributing](docs/CONTRIBUTING.md) for full development setup.
 
 ---
 
+<a id="troubleshooting"></a>
+
 ## 🔍 Troubleshooting
 
 | Problem | Solution |
@@ -341,6 +365,8 @@ See [Contributing](docs/CONTRIBUTING.md) for full development setup.
 | GPU not detected | ROCm is checked first (`rocminfo` + `rocm-smi`); if unavailable, falls back to `lspci` + DRM sysfs on Linux |
 
 ---
+
+<a id="documentation"></a>
 
 ## 📚 Documentation
 
