@@ -119,6 +119,10 @@ Other install options: [npm](#installation) · [pre-built package](#installation
 
 ## 💡 Use Cases
 
+<div align="center">
+<img src="public/screenshots/bot-field-guide.png" alt="Agent field guide — each bot cataloged by role and specialization" width="680" />
+</div>
+
 A hybrid fleet makes sense anywhere you have repetitive work alongside tasks that need deeper reasoning.
 
 - **DevOps & infrastructure** — A local agent monitors logs, restarts failed services, and runs nightly backups on a cron schedule. A cloud agent investigates complex outages that require cross-referencing multiple systems and writing incident reports.
