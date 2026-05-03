@@ -18,24 +18,24 @@ The operator dashboard for [OpenClaw](https://github.com/openclaw) — manage a 
 
 ## Table of Contents
 
-- [Why rocCLAW?](#why-rocclaw)
+- [Why rocCLAW?](#-why-rocclaw)
+- [Quick Start](#-quick-start)
 - [Local + Cloud Hybrid Fleet](#-local--cloud-hybrid-fleet)
-- [Quick Start](#quick-start)
-- [What You Can Do](#what-you-can-do)
+- [What You Can Do](#-what-you-can-do)
 - [Use Cases](#-use-cases)
 - [Monitor Your Hardware](#-monitor-your-hardware)
 - [Built-in Skills](#-built-in-skills)
 - [Dashboard at a Glance](#-dashboard-at-a-glance)
-- [Installation](#installation)
-- [Setup Guides](#setup-guides)
-- [Tested Configurations](#tested-configurations)
-- [Development](#development)
-- [Troubleshooting](#troubleshooting)
-- [Documentation](#documentation)
+- [Installation](#-installation)
+- [Setup Guides](#-setup-guides)
+- [Tested Configurations](#-tested-configurations)
+- [Development](#-development)
+- [Troubleshooting](#-troubleshooting)
+- [Documentation](#-documentation)
 
 ---
 
-## Why rocCLAW?
+## 🤖 Why rocCLAW?
 
 <div align="center">
 <img src="public/screenshots/bot-family.png" alt="A hybrid fleet of AI agents — local and cloud, managed from one dashboard" width="680" />
@@ -51,10 +51,31 @@ Point rocCLAW at any OpenClaw gateway — on your desk, across the network, or S
 
 ```
 Browser (React)  <── HTTP / SSE ──>  rocCLAW Server  <── WebSocket ──>  OpenClaw Gateway
-                                     (Next.js + SQLite)                  (your hardware)
+                                     (Next.js + SQLite)                  (local GPU / cloud API)
 ```
 
 Your browser never talks to the gateway directly. rocCLAW proxies everything securely — authentication, event replay, rate limiting — and your tokens never leave the server.
+
+---
+
+## 🚀 Quick Start
+
+**Prerequisites:** Node.js 20.9+ and a running OpenClaw gateway.
+
+```bash
+git clone https://github.com/simonCatBot/rocclaw.git
+cd rocclaw
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000), enter your gateway URL (`ws://127.0.0.1:18789`), paste your token, and click **Save Settings**.
+
+```bash
+openclaw config get gateway.auth.token   # Get your token
+```
+
+Other install options: [npm](#-installation) · [pre-built package](#-installation) · [full install guide](docs/INSTALL.md) · [setup guides →](#-setup-guides)
 
 ---
 
@@ -76,28 +97,7 @@ Not every task needs a cloud model. Run local LLMs for the bulk of the work and 
 
 ---
 
-## Quick Start
-
-**Prerequisites:** Node.js 20.9+ and a running OpenClaw gateway.
-
-```bash
-git clone https://github.com/simonCatBot/rocclaw.git
-cd rocclaw
-npm install
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000), enter your gateway URL (`ws://127.0.0.1:18789`), paste your token, and click **Save Settings**.
-
-```bash
-openclaw config get gateway.auth.token   # Get your token
-```
-
-Other install options: [npm](#installation) · [pre-built package](#installation) · [full install guide](docs/INSTALL.md) · [setup guides →](#setup-guides)
-
----
-
-## What You Can Do
+## ⚡ What You Can Do
 
 <!-- TODO: Add screenshot showing the chat interface with thinking traces -->
 
@@ -105,11 +105,18 @@ Other install options: [npm](#installation) · [pre-built package](#installation
 
 <!-- TODO: Add screenshot showing the tasks/cron dashboard -->
 
-**Put agents on autopilot** — Schedule recurring jobs with drag-and-drop — run every 5 minutes, daily at 9am, or any cron expression. Agents retain context across sessions and act on heartbeat schedules independently. A local agent running health checks or log analysis costs nothing per invocation.
+**Put agents on autopilot** — Schedule recurring jobs with drag-and-drop — run every 5 minutes, daily at 9am, or any cron expression. Agents retain context across sessions and act on heartbeat schedules independently.
 
 <!-- TODO: Add screenshot showing the agent configuration panel -->
 
-**Configure without SSH** — Edit any agent's personality files (SOUL, IDENTITY, USER, AGENTS, TOOLS, HEARTBEAT, MEMORY) and permissions directly in the browser. Set per-agent model selection to route work to local or cloud.
+**Configure without SSH** — Edit any agent's personality files and permissions directly in the browser. Each agent has 7 personality files that define its behavior:
+
+<details>
+<summary>IDENTITY · SOUL · USER · AGENTS · TOOLS · HEARTBEAT · MEMORY</summary>
+
+`IDENTITY.md` → name, creature type, vibe, emoji, avatar · `SOUL.md` → core truths, boundaries, personality · `USER.md` → context about you (name, pronouns, timezone) · `AGENTS.md` → operating rules and workflows · `TOOLS.md` → tool usage guidelines · `HEARTBEAT.md` → periodic check configuration · `MEMORY.md` → persistent memory and learned context
+
+</details>
 
 **Access from anywhere** — Connect to any gateway via LAN, Tailscale, or SSH tunnel. Your gateway stays secure; you stay mobile.
 
@@ -144,8 +151,6 @@ When your agents run on local hardware, you need to see how that hardware is doi
 **Time-series graphs** — Track resource usage over 5m, 10m, or 30m windows. Spot bottlenecks, see when your GPU is maxed out, and decide whether a task should move to cloud.
 
 **AMD GPU support** — ROCm-first detection with automatic sysfs fallback. Full metrics for RDNA 3 / 3.5 GPUs including VRAM, temperature, power draw, and clock speeds. See [tested GPU configurations](#gpu-configurations) below.
-
-**Token usage tracking** — Per-agent and per-model breakdowns. See exactly which agents are consuming cloud tokens and how much each model costs you.
 
 ---
 
@@ -200,11 +205,11 @@ Skills are **per-agent** — assign different combinations to each agent to matc
 | **Graph** | Time-series charts with 5m / 10m / 30m ranges |
 | **Tasks** | Cron job kanban board with drag-and-drop scheduling |
 | **Tokens** | Per-agent and per-model token usage tracking |
-| **Settings** | Appearance, gateway, model, and agent configuration |
+| **Settings** | Appearance (light/dark theme), gateway, model, and agent configuration |
 
 ---
 
-## Installation
+## 📦 Installation
 
 ### npm (recommended)
 
@@ -237,7 +242,7 @@ For detailed Ubuntu setup with SSH tunnels, Tailscale, and environment variables
 
 ---
 
-## Setup Guides
+## 🔧 Setup Guides
 
 <details>
 <summary><strong>Same-Machine Setup</strong></summary>
@@ -289,15 +294,7 @@ Keep the terminal open, then connect rocCLAW to `ws://localhost:18789`.
 
 ---
 
-## Agent Personality Files
-
-Every agent has 7 personality files that define its behavior — all editable from the dashboard:
-
-`IDENTITY.md` → name, creature type, vibe, emoji, avatar · `SOUL.md` → core truths, boundaries, personality · `USER.md` → context about you (name, pronouns, timezone) · `AGENTS.md` → operating rules and workflows · `TOOLS.md` → tool usage guidelines · `HEARTBEAT.md` → periodic check configuration · `MEMORY.md` → persistent memory and learned context
-
----
-
-## Tested Configurations
+## ✅ Tested Configurations
 
 ### Operating Systems
 
@@ -322,7 +319,7 @@ ROCm is checked first (`rocminfo` + `rocm-smi`). If unavailable, rocCLAW falls b
 
 ---
 
-## Development
+## 🛠️ Development
 
 ```bash
 npm run dev          # Dev server with hot reload
@@ -344,7 +341,7 @@ See [Contributing](docs/CONTRIBUTING.md) for full development setup.
 
 ---
 
-## Troubleshooting
+## 🔍 Troubleshooting
 
 | Problem | Solution |
 |---------|----------|
@@ -357,7 +354,7 @@ See [Contributing](docs/CONTRIBUTING.md) for full development setup.
 
 ---
 
-## Documentation
+## 📚 Documentation
 
 | Document | Description |
 |----------|-------------|
@@ -379,4 +376,4 @@ See [Contributing](docs/CONTRIBUTING.md) for full development setup.
 
 > **Disclaimer:** rocCLAW is a community project and is not affiliated with, endorsed by, or an official product of AMD.
 
-**Acknowledgments:** Agents built using [Ollama](https://ollama.com) models — [Kimi K2](https://ollama.com/library/kimi-k2), [GLM 5.1](https://ollama.com/library/glm4), and [Claude](https://www.anthropic.com/claude).
+**Acknowledgments:** Agents built using [Ollama](https://ollama.com) models — [Kimi K2](https://ollama.com/library/kimi-k2), [GLM 5.1](https://ollama.com/library/glm-5.1), and [Claude](https://www.anthropic.com/claude).
