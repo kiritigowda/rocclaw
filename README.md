@@ -14,10 +14,6 @@ The operator dashboard for [OpenClaw](https://github.com/openclaw) — manage a 
 
 </div>
 
-<div align="center">
-<img src="public/screenshots/bot-family.png" alt="A hybrid fleet of AI agents — local and cloud, managed from one dashboard" width="680" />
-</div>
-
 ---
 
 ## Table of Contents
@@ -40,6 +36,10 @@ The operator dashboard for [OpenClaw](https://github.com/openclaw) — manage a 
 ---
 
 ## Why rocCLAW?
+
+<div align="center">
+<img src="public/screenshots/bot-family.png" alt="A hybrid fleet of AI agents — local and cloud, managed from one dashboard" width="680" />
+</div>
 
 Most AI tools wait for you to type a prompt, return a response, and stop. An agent is different — it takes an objective, breaks it into steps, executes across tools and systems, and keeps running on a schedule without manual intervention. OpenClaw agents can monitor log files, run CI pipelines, triage issues, sync data between services, and operate continuously on schedules you define.
 
@@ -150,9 +150,9 @@ When your agents run on local hardware, you need to see how that hardware is doi
 <div align="center">
 <table>
 <tr>
-<td align="center"><img src="public/screenshots/bot-before-skills.png" alt="Agent before skills — basic tools" width="300" /><br/><em>Before: basic tools</em></td>
+<td align="center"><img src="public/screenshots/bot-before-skills.png" alt="Agent before skills — basic tools" width="420" /><br/><em>Before: basic tools</em></td>
 <td align="center"><strong>+ Skills</strong><br/>→</td>
-<td align="center"><img src="public/screenshots/bot-after-skills.png" alt="Agent after skills — rocket scientist" width="300" /><br/><em>After: rocket scientist</em></td>
+<td align="center"><img src="public/screenshots/bot-after-skills.png" alt="Agent after skills — rocket scientist" width="420" /><br/><em>After: rocket scientist</em></td>
 </tr>
 </table>
 </div>
