@@ -379,12 +379,14 @@ See [Contributing](docs/CONTRIBUTING.md) for full development setup.
 
 <div align="center">
 
-[Documentation](docs/) &middot; [Issues](../../issues) &middot; [Contributing](docs/CONTRIBUTING.md)
+**[Documentation](docs/)** &middot; **[Issues](../../issues)** &middot; **[Contributing](docs/CONTRIBUTING.md)**
+
+<br/>
+
+<sub>Built with [Ollama](https://ollama.com) · [Kimi K2](https://ollama.com/library/kimi-k2) · [GLM 5.1](https://ollama.com/library/glm-5.1) · [Claude](https://www.anthropic.com/claude)</sub>
+
+<sub>rocCLAW is a community project — not affiliated with or endorsed by AMD.</sub>
+
+<sub>MIT License &copy; 2026 [SimonCatBot](https://github.com/simoncatbot)</sub>
 
 </div>
-
----
-
-> **Disclaimer:** rocCLAW is a community project and is not affiliated with, endorsed by, or an official product of AMD.
-
-**Acknowledgments:** Agents built using [Ollama](https://ollama.com) models — [Kimi K2](https://ollama.com/library/kimi-k2), [GLM 5.1](https://ollama.com/library/glm-5.1), and [Claude](https://www.anthropic.com/claude).
