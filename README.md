@@ -298,11 +298,12 @@ Keep the terminal open, then connect rocCLAW to `ws://localhost:18789`.
 
 ### Prerequisites
 
-| Requirement | Version |
-|-------------|---------|
-| **Node.js** | >= 20.9.0 |
-| **npm** | >= 10 |
-| **OpenClaw Gateway** | Running instance (local or remote) |
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| **Node.js** | >= 20.9.0 | |
+| **npm** | >= 10 | |
+| **OpenClaw Gateway** | Running instance | Local or remote |
+| **ROCm** *(optional)* | >= 7.2.1 | For AMD GPU monitoring |
 
 ### Supported Platforms
 
