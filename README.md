@@ -14,8 +14,9 @@ The operator dashboard for [OpenClaw](https://github.com/openclaw) — manage a 
 
 </div>
 
-<!-- TODO: Add hero screenshot of the dashboard here -->
-<!-- <img src="public/screenshots/dashboard-hero.png" alt="rocCLAW Dashboard" width="100%" /> -->
+<div align="center">
+<img src="public/screenshots/bot-family.png" alt="A hybrid fleet of AI agents — local and cloud, managed from one dashboard" width="680" />
+</div>
 
 ---
 
@@ -25,7 +26,7 @@ The operator dashboard for [OpenClaw](https://github.com/openclaw) — manage a 
 - [Local + Cloud Hybrid Fleet](#-local--cloud-hybrid-fleet)
 - [Quick Start](#quick-start)
 - [What You Can Do](#what-you-can-do)
-- [Who Uses This](#-who-uses-this)
+- [Use Cases](#-use-cases)
 - [Monitor Your Hardware](#-monitor-your-hardware)
 - [Skills & ClawHub](#-skills--clawhub)
 - [Dashboard at a Glance](#-dashboard-at-a-glance)
@@ -40,9 +41,9 @@ The operator dashboard for [OpenClaw](https://github.com/openclaw) — manage a 
 
 ## Why rocCLAW?
 
-AI agents aren't chatbots. A chatbot gives you output you act on manually. An agent takes a job and executes it end-to-end — making decisions, using tools, working across applications, and running 24/7 whether you're watching or not. People are building autonomous agent fleets with OpenClaw that run businesses, ship code, manage content pipelines, and handle operations around the clock.
+Most AI tools wait for you to type a prompt, return a response, and stop. An agent is different — it takes an objective, breaks it into steps, executes across tools and systems, and keeps running on a schedule without manual intervention. OpenClaw agents can monitor log files, run CI pipelines, triage issues, sync data between services, and operate continuously on schedules you define.
 
-The problem: cloud AI tokens add up fast. If your agents are running cron jobs, monitoring tasks, file operations, and routine queries around the clock, paying cloud rates for every request is wasteful — especially when capable open-weight models can run on hardware you already own.
+The problem: running agents around the clock on cloud models gets expensive. If an agent is checking system health every five minutes or processing a queue of routine tasks, those tokens add up — especially when open-weight models running on your own hardware can handle the same work at zero marginal cost.
 
 **rocCLAW lets you build a hybrid agent fleet.** Local models handle the daily workload at zero token cost. Cloud models step in only for the tasks that need them — complex reasoning, multi-step planning, deep context. You control the split per-agent, and the dashboard shows you exactly where every token goes.
 
@@ -63,7 +64,7 @@ Not every task needs a cloud model. Run local LLMs for the bulk of the work and 
 
 <!-- TODO: Add screenshot showing the token usage dashboard with per-agent/per-model breakdown -->
 
-**Local agents** run on your hardware with open-weight models via [Ollama](https://ollama.com), vLLM, or any local provider. They handle the daily load — file operations, simple queries, monitoring, scheduled tasks, messaging integrations. Zero token cost. They maintain memory across sessions and improve continuously without burning cloud credits.
+**Local agents** run on your hardware with open-weight models via [Ollama](https://ollama.com), vLLM, or any local provider. They handle the predictable workload — log monitoring, scheduled reports, file processing, data syncing, health checks. Zero token cost, and they retain memory across sessions so they improve without burning cloud credits.
 
 **Cloud agents** use high-capability models (Claude, GPT, Gemini) for the hard stuff — complex reasoning, multi-step planning, code generation that needs deep context. You only pay when you need the horsepower.
 
@@ -104,7 +105,7 @@ Other install options: [npm](#installation) · [pre-built package](#installation
 
 <!-- TODO: Add screenshot showing the tasks/cron dashboard -->
 
-**Put agents on autopilot** — Your agents work while you don't. Schedule cron jobs with drag-and-drop — interval, daily, or cron expression. Agents maintain memory across sessions, make independent decisions via heartbeats, and can spawn sub-agents for background tasks. Local agents handle all of this at zero token cost.
+**Put agents on autopilot** — Schedule recurring jobs with drag-and-drop — run every 5 minutes, daily at 9am, or any cron expression. Agents retain context across sessions and act on heartbeat schedules independently. A local agent running health checks or log analysis costs nothing per invocation.
 
 <!-- TODO: Add screenshot showing the agent configuration panel -->
 
@@ -116,15 +117,15 @@ Other install options: [npm](#installation) · [pre-built package](#installation
 
 ---
 
-## 💡 Who Uses This
+## 💡 Use Cases
 
-OpenClaw agents are already running autonomous workflows across industries. rocCLAW is how you manage them.
+A hybrid fleet makes sense anywhere you have repetitive work alongside tasks that need deeper reasoning.
 
-- **Solo consultants** — Agents maintain your social presence, update your portfolio, publish case studies, and follow up with prospects while you focus on client work. Local agents handle the routine; cloud agents draft the thought leadership.
-- **Side projects & startups** — Agents research markets, build prototypes, create landing pages, and handle outreach while you keep your day job. Schedule it all from the Tasks tab.
-- **Growing teams** — Instead of hiring for admin, let agents manage leads, schedule demos, process paperwork, and run campaigns. Monitor everything from one dashboard.
-- **Content creators** — Agents repurpose content across platforms, create media assets, engage with comments, and track performance. Your local agent handles the repetitive distribution; your cloud agent writes the original content.
-- **Developers** — Coordinate multiple agents as a dev team working in parallel on your codebase. Code review, CI runs, issue triage — all managed through rocCLAW.
+- **DevOps & infrastructure** — A local agent monitors logs, restarts failed services, and runs nightly backups on a cron schedule. A cloud agent investigates complex outages that require cross-referencing multiple systems and writing incident reports.
+- **Software development** — Local agents handle CI runs, lint fixes, dependency updates, and issue triage. Cloud agents take on architecture planning, complex refactors, and code review that requires deep context across large codebases.
+- **Data pipelines** — Local agents run ETL jobs, validate incoming data, and generate daily summary reports. Cloud agents analyze anomalies, build dashboards from unstructured data, and write the queries that require multi-step reasoning.
+- **System administration** — Local agents check disk usage, rotate credentials, sync configurations across servers. Cloud agents draft migration plans, debug networking issues, and handle tasks that require understanding the full topology.
+- **Research & analysis** — Local agents collect data, scrape sources on a schedule, and organize findings into structured formats. Cloud agents synthesize across sources, identify patterns, and produce the final analysis.
 
 ---
 
@@ -145,6 +146,18 @@ When your agents run on local hardware, you need to see how that hardware is doi
 ---
 
 ## 🧠 Skills & ClawHub
+
+<div align="center">
+<table>
+<tr>
+<td align="center"><img src="public/screenshots/bot-before-skills.png" alt="Agent before skills — basic tools" width="300" /><br/><em>Before: basic tools</em></td>
+<td align="center"><strong>+ Skills</strong><br/>→</td>
+<td align="center"><img src="public/screenshots/bot-after-skills.png" alt="Agent after skills — rocket scientist" width="300" /><br/><em>After: rocket scientist</em></td>
+</tr>
+</table>
+</div>
+
+Same agent, same hardware. The right skills change what it can do.
 
 Browse and install skills from [**ClawHub**](https://clawhub.ai) — the public skill registry for OpenClaw — right from the dashboard. Assign skills per-agent with one click. Skills help you route work effectively — give your local agent ReAct Loop for routine tasks and your cloud agent Plan First for complex planning.
 
