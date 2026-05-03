@@ -22,9 +22,9 @@ The operator dashboard for [OpenClaw](https://github.com/openclaw) — manage a 
 - [Quick Start](#-quick-start)
 - [Local + Cloud Hybrid Fleet](#-local--cloud-hybrid-fleet)
 - [What You Can Do](#-what-you-can-do)
-- [Use Cases](#-use-cases)
 - [Monitor Your Hardware](#-monitor-your-hardware)
 - [Built-in Skills](#-built-in-skills)
+- [Use Cases](#-use-cases)
 - [Dashboard at a Glance](#-dashboard-at-a-glance)
 - [Installation](#-installation)
 - [Setup Guides](#-setup-guides)
@@ -124,22 +124,6 @@ Not every task needs a cloud model. Run local LLMs for the bulk of the work and 
 
 ---
 
-## 💡 Use Cases
-
-<div align="center">
-<img src="public/screenshots/bot-field-guide.png" alt="Agent field guide — each bot cataloged by role and specialization" width="680" />
-</div>
-
-A hybrid fleet makes sense anywhere you have repetitive work alongside tasks that need deeper reasoning.
-
-- **DevOps & infrastructure** — A local agent monitors logs, restarts failed services, and runs nightly backups on a cron schedule. A cloud agent investigates complex outages that require cross-referencing multiple systems and writing incident reports.
-- **Software development** — Local agents handle CI runs, lint fixes, dependency updates, and issue triage. Cloud agents take on architecture planning, complex refactors, and code review that requires deep context across large codebases.
-- **Data pipelines** — Local agents run ETL jobs, validate incoming data, and generate daily summary reports. Cloud agents analyze anomalies, build dashboards from unstructured data, and write the queries that require multi-step reasoning.
-- **System administration** — Local agents check disk usage, rotate credentials, sync configurations across servers. Cloud agents draft migration plans, debug networking issues, and handle tasks that require understanding the full topology.
-- **Research & analysis** — Local agents collect data, scrape sources on a schedule, and organize findings into structured formats. Cloud agents synthesize across sources, identify patterns, and produce the final analysis.
-
----
-
 ## 📊 Monitor Your Hardware
 
 <!-- TODO: Add screenshot showing system metrics and graph view -->
@@ -186,6 +170,22 @@ rocCLAW ships with 12 featured skills you can assign per-agent directly from the
 | | Multi-Agent Collaboration | Intent recognition, intelligent routing, reflection across agent teams |
 
 Skills are **per-agent** — assign different combinations to each agent to match its role in your fleet. Need more? Browse and install additional skills from [ClawHub](https://clawhub.ai) — integrated directly into rocCLAW with one-click install.
+
+---
+
+## 💡 Use Cases
+
+<div align="center">
+<img src="public/screenshots/bot-field-guide.png" alt="Agent field guide — each bot cataloged by role and specialization" width="680" />
+</div>
+
+A hybrid fleet makes sense anywhere you have repetitive work alongside tasks that need deeper reasoning.
+
+- **DevOps & infrastructure** — A local agent monitors logs, restarts failed services, and runs nightly backups on a cron schedule. A cloud agent investigates complex outages that require cross-referencing multiple systems and writing incident reports.
+- **Software development** — Local agents handle CI runs, lint fixes, dependency updates, and issue triage. Cloud agents take on architecture planning, complex refactors, and code review that requires deep context across large codebases.
+- **Data pipelines** — Local agents run ETL jobs, validate incoming data, and generate daily summary reports. Cloud agents analyze anomalies, build dashboards from unstructured data, and write the queries that require multi-step reasoning.
+- **System administration** — Local agents check disk usage, rotate credentials, sync configurations across servers. Cloud agents draft migration plans, debug networking issues, and handle tasks that require understanding the full topology.
+- **Research & analysis** — Local agents collect data, scrape sources on a schedule, and organize findings into structured formats. Cloud agents synthesize across sources, identify patterns, and produce the final analysis.
 
 ---
 
