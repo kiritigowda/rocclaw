@@ -318,12 +318,12 @@ Keep the terminal open, then connect rocCLAW to `ws://localhost:18789`.
 
 GPU metrics are optional — rocCLAW works without them. When available, live utilization, VRAM, temperature, power, and clock data appear in the System and Graph tabs.
 
-| GPU | Architecture | Detection |
-|-----|-------------|-----------|
-| **Ryzen AI MAX+ 395** (Strix Halo) | RDNA 3.5 | ROCm + device ID |
-| **Ryzen AI 300 series** (Strix Point) | RDNA 3.5 | ROCm + device ID |
-| **Radeon RX 7900 XTX** | RDNA 3 | ROCm |
-| **Other AMD GPUs** | Varies | ROCm or `lspci` + DRM sysfs fallback |
+| GPU | Detection |
+|-----|-----------|
+| **Ryzen AI MAX+ 395** | ROCm |
+| **Ryzen AI 300 series** | ROCm |
+| **Radeon RX 7900 XTX** | ROCm |
+| **Other AMD GPUs** | ROCm or sysfs fallback |
 
 ROCm is checked first (`rocminfo` + `rocm-smi`). If unavailable, rocCLAW falls back to `lspci` + DRM sysfs for basic GPU info — no ROCm install required.
 
