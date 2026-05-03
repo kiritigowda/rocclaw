@@ -28,7 +28,7 @@ The operator dashboard for [OpenClaw](https://github.com/openclaw) — manage a 
 - [Dashboard at a Glance](#-dashboard-at-a-glance)
 - [Installation](#-installation)
 - [Setup Guides](#-setup-guides)
-- [Tested Configurations](#-tested-configurations)
+- [Requirements & Compatibility](#-requirements--compatibility)
 - [Development](#-development)
 - [Troubleshooting](#-troubleshooting)
 - [Documentation](#-documentation)
@@ -150,7 +150,7 @@ When your agents run on local hardware, you need to see how that hardware is doi
 
 **Time-series graphs** — Track resource usage over 5m, 10m, or 30m windows. Spot bottlenecks, see when your GPU is maxed out, and decide whether a task should move to cloud.
 
-**AMD GPU support** — ROCm-first detection with automatic sysfs fallback. Full metrics for RDNA 3 / 3.5 GPUs including VRAM, temperature, power draw, and clock speeds. See [tested GPU configurations](#gpu-configurations) below.
+**AMD GPU support** — ROCm-first detection with automatic sysfs fallback. Full metrics for RDNA 3 / 3.5 GPUs including VRAM, temperature, power draw, and clock speeds. See [GPU compatibility](#gpu-monitoring-optional) below.
 
 ---
 
@@ -294,26 +294,36 @@ Keep the terminal open, then connect rocCLAW to `ws://localhost:18789`.
 
 ---
 
-## ✅ Tested Configurations
+## ✅ Requirements & Compatibility
 
-### Operating Systems
+### Prerequisites
 
-| OS | Version | Status |
-|----|---------|--------|
-| **Ubuntu** | 24.04 LTS (Noble Numbat) | ✅ Tested |
-| **Ubuntu** | 22.04 LTS (Jammy Jellyfish) | ✅ Tested |
-| Linux (generic) | Kernel 6.x+ | ✅ GPU fallback via sysfs |
+| Requirement | Version |
+|-------------|---------|
+| **Node.js** | >= 20.9.0 |
+| **npm** | >= 10 |
+| **OpenClaw Gateway** | Running instance (local or remote) |
 
-### GPU Configurations
+### Supported Platforms
 
-rocCLAW supports AMD GPU monitoring with ROCm-first detection and a sysfs fallback for systems without ROCm installed.
+| Platform | Status | Notes |
+|----------|--------|-------|
+| **Ubuntu 24.04 LTS** | ✅ Fully tested | Primary development platform |
+| **Ubuntu 22.04 LTS** | ✅ Fully tested | |
+| **Linux (other distros)** | ✅ Expected to work | Kernel 6.x+ recommended |
+| **macOS** | ✅ Expected to work | GPU monitoring not available |
+| **Windows (WSL2)** | ✅ Expected to work | GPU monitoring not available |
 
-| APU / GPU | Architecture | Detection | Notes |
-|-----------|-------------|-----------|-------|
-| **Ryzen AI MAX+ 395** (Strix Halo) | RDNA 3.5 (gfx1151) | ROCm + device ID | 40 CU variant auto-detected as 8060S; 32 CU as 8050S |
-| **Ryzen AI 300 series** (Strix Point) | RDNA 3.5 (gfx1150) | ROCm + device ID | 16 CU → 890M, 12 CU → 880M; handles rocm-smi index mismatches |
-| **Radeon RX 7900 XTX** | RDNA 3 (gfx1100) | ROCm | Full VRAM, temp, power, and clock metrics |
-| **Other AMD GPUs** | Varies | ROCm or sysfs fallback | `lspci` + DRM sysfs on Linux when ROCm is unavailable |
+### GPU Monitoring (optional)
+
+GPU metrics are optional — rocCLAW works without them. When available, live utilization, VRAM, temperature, power, and clock data appear in the System and Graph tabs.
+
+| GPU | Architecture | Detection |
+|-----|-------------|-----------|
+| **Ryzen AI MAX+ 395** (Strix Halo) | RDNA 3.5 | ROCm + device ID |
+| **Ryzen AI 300 series** (Strix Point) | RDNA 3.5 | ROCm + device ID |
+| **Radeon RX 7900 XTX** | RDNA 3 | ROCm |
+| **Other AMD GPUs** | Varies | ROCm or `lspci` + DRM sysfs fallback |
 
 ROCm is checked first (`rocminfo` + `rocm-smi`). If unavailable, rocCLAW falls back to `lspci` + DRM sysfs for basic GPU info — no ROCm install required.
 
@@ -368,7 +378,7 @@ See [Contributing](docs/CONTRIBUTING.md) for full development setup.
 
 <div align="center">
 
-[Documentation](docs/) &middot; [Issues](../../issues) &middot; [Discord](https://discord.gg/EFkFHbZw)
+[Documentation](docs/) &middot; [Issues](../../issues) &middot; [Contributing](docs/CONTRIBUTING.md)
 
 </div>
 
