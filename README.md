@@ -25,6 +25,7 @@ The operator dashboard for [OpenClaw](https://github.com/openclaw) — manage a 
 - [Local + Cloud Hybrid Fleet](#-local--cloud-hybrid-fleet)
 - [Quick Start](#quick-start)
 - [What You Can Do](#what-you-can-do)
+- [Who Uses This](#-who-uses-this)
 - [Monitor Your Hardware](#-monitor-your-hardware)
 - [Skills & ClawHub](#-skills--clawhub)
 - [Dashboard at a Glance](#-dashboard-at-a-glance)
@@ -39,7 +40,9 @@ The operator dashboard for [OpenClaw](https://github.com/openclaw) — manage a 
 
 ## Why rocCLAW?
 
-Cloud AI tokens add up fast. If you're running agents around the clock — handling cron jobs, monitoring tasks, file operations, routine queries — paying cloud rates for every request is wasteful, especially when capable open-weight models can run on hardware you already own.
+AI agents aren't chatbots. A chatbot gives you output you act on manually. An agent takes a job and executes it end-to-end — making decisions, using tools, working across applications, and running 24/7 whether you're watching or not. People are building autonomous agent fleets with OpenClaw that run businesses, ship code, manage content pipelines, and handle operations around the clock.
+
+The problem: cloud AI tokens add up fast. If your agents are running cron jobs, monitoring tasks, file operations, and routine queries around the clock, paying cloud rates for every request is wasteful — especially when capable open-weight models can run on hardware you already own.
 
 **rocCLAW lets you build a hybrid agent fleet.** Local models handle the daily workload at zero token cost. Cloud models step in only for the tasks that need them — complex reasoning, multi-step planning, deep context. You control the split per-agent, and the dashboard shows you exactly where every token goes.
 
@@ -60,7 +63,7 @@ Not every task needs a cloud model. Run local LLMs for the bulk of the work and 
 
 <!-- TODO: Add screenshot showing the token usage dashboard with per-agent/per-model breakdown -->
 
-**Local agents** run on your hardware with open-weight models via [Ollama](https://ollama.com), vLLM, or any local provider. They handle the daily load — file operations, simple queries, monitoring, scheduled tasks. Zero token cost.
+**Local agents** run on your hardware with open-weight models via [Ollama](https://ollama.com), vLLM, or any local provider. They handle the daily load — file operations, simple queries, monitoring, scheduled tasks, messaging integrations. Zero token cost. They maintain memory across sessions and improve continuously without burning cloud credits.
 
 **Cloud agents** use high-capability models (Claude, GPT, Gemini) for the hard stuff — complex reasoning, multi-step planning, code generation that needs deep context. You only pay when you need the horsepower.
 
@@ -101,7 +104,7 @@ Other install options: [npm](#installation) · [pre-built package](#installation
 
 <!-- TODO: Add screenshot showing the tasks/cron dashboard -->
 
-**Put agents on autopilot** — Schedule cron jobs with drag-and-drop. Interval, daily, or cron expression — your agents run on your schedule without crontab editing. Local agents handle scheduled tasks at zero cost.
+**Put agents on autopilot** — Your agents work while you don't. Schedule cron jobs with drag-and-drop — interval, daily, or cron expression. Agents maintain memory across sessions, make independent decisions via heartbeats, and can spawn sub-agents for background tasks. Local agents handle all of this at zero token cost.
 
 <!-- TODO: Add screenshot showing the agent configuration panel -->
 
@@ -110,6 +113,18 @@ Other install options: [npm](#installation) · [pre-built package](#installation
 **Access from anywhere** — Connect to any gateway via LAN, Tailscale, or SSH tunnel. Your gateway stays secure; you stay mobile.
 
 **Stay in control** — Three-layer security: network policy, cookie-based auth, and a method allowlist on the gateway adapter. Ed25519 device identity for cryptographic authentication. Per-agent controls for exec mode, sandbox isolation, workspace access, and tool profiles. See [Permissions & Sandboxing](docs/permissions-sandboxing.md) for details.
+
+---
+
+## 💡 Who Uses This
+
+OpenClaw agents are already running autonomous workflows across industries. rocCLAW is how you manage them.
+
+- **Solo consultants** — Agents maintain your social presence, update your portfolio, publish case studies, and follow up with prospects while you focus on client work. Local agents handle the routine; cloud agents draft the thought leadership.
+- **Side projects & startups** — Agents research markets, build prototypes, create landing pages, and handle outreach while you keep your day job. Schedule it all from the Tasks tab.
+- **Growing teams** — Instead of hiring for admin, let agents manage leads, schedule demos, process paperwork, and run campaigns. Monitor everything from one dashboard.
+- **Content creators** — Agents repurpose content across platforms, create media assets, engage with comments, and track performance. Your local agent handles the repetitive distribution; your cloud agent writes the original content.
+- **Developers** — Coordinate multiple agents as a dev team working in parallel on your codebase. Code review, CI runs, issue triage — all managed through rocCLAW.
 
 ---
 
