@@ -62,11 +62,11 @@ Your browser never talks to the gateway directly. rocCLAW proxies everything sec
 
 **Prerequisites:** Node.js 20.9+ and a running OpenClaw gateway.
 
+Install via npm, pre-built package, or from source — see [Installation](#-installation) for all options.
+
 ```bash
-git clone https://github.com/simonCatBot/rocclaw.git
-cd rocclaw
-npm install
-npm run dev
+npm install -g @simoncatbot/rocclaw
+rocclaw
 ```
 
 Open [http://localhost:3000](http://localhost:3000), enter your gateway URL (`ws://127.0.0.1:18789`), paste your token, and click **Save Settings**.
@@ -75,7 +75,7 @@ Open [http://localhost:3000](http://localhost:3000), enter your gateway URL (`ws
 openclaw config get gateway.auth.token   # Get your token
 ```
 
-Other install options: [npm](#-installation) · [pre-built package](#-installation) · [full install guide](docs/INSTALL.md) · [setup guides →](#-setup-guides)
+See also: [full install guide](docs/INSTALL.md) · [setup guides →](#-setup-guides)
 
 ---
 
@@ -120,7 +120,7 @@ Not every task needs a cloud model. Run local LLMs for the bulk of the work and 
 
 **Access from anywhere** — Connect to any gateway via LAN, Tailscale, or SSH tunnel. Your gateway stays secure; you stay mobile.
 
-**Stay in control** — Three-layer security: network policy, cookie-based auth, and a method allowlist on the gateway adapter. Ed25519 device identity for cryptographic authentication. Per-agent controls for exec mode, sandbox isolation, workspace access, and tool profiles. See [Permissions & Sandboxing](docs/permissions-sandboxing.md) for details.
+**Stay in control** — Per-agent exec permissions, sandbox isolation, and cryptographic device authentication. See [Permissions & Sandboxing](docs/permissions-sandboxing.md) for the full security model.
 
 ---
 
@@ -134,7 +134,7 @@ When your agents run on local hardware, you need to see how that hardware is doi
 
 **Time-series graphs** — Track resource usage over 5m, 10m, or 30m windows. Spot bottlenecks, see when your GPU is maxed out, and decide whether a task should move to cloud.
 
-**AMD GPU support** — ROCm-first detection with automatic sysfs fallback. Full metrics for RDNA 3 / 3.5 GPUs including VRAM, temperature, power draw, and clock speeds. See [GPU compatibility](#gpu-monitoring-optional) below.
+**AMD GPU support** — ROCm-first detection with automatic sysfs fallback. Full metrics for AMD GPUs including VRAM, temperature, power draw, and clock speeds. See [Requirements & Compatibility](#-requirements--compatibility) for details.
 
 ---
 
@@ -296,37 +296,14 @@ Keep the terminal open, then connect rocCLAW to `ws://localhost:18789`.
 
 ## ✅ Requirements & Compatibility
 
-### Prerequisites
+| Requirement | Version |
+|-------------|---------|
+| **Node.js** | >= 20.9.0 |
+| **npm** | >= 10 |
+| **OpenClaw Gateway** | Running instance (local or remote) |
+| **ROCm** *(optional)* | >= 7.2.1 (AMD GPU monitoring) |
 
-| Requirement | Version | Notes |
-|-------------|---------|-------|
-| **Node.js** | >= 20.9.0 | |
-| **npm** | >= 10 | |
-| **OpenClaw Gateway** | Running instance | Local or remote |
-| **ROCm** *(optional)* | >= 7.2.1 | For AMD GPU monitoring |
-
-### Supported Platforms
-
-| Platform | Status | Notes |
-|----------|--------|-------|
-| **Ubuntu 24.04 LTS** | ✅ Fully tested | Primary development platform |
-| **Ubuntu 22.04 LTS** | ✅ Fully tested | |
-| **Linux (other distros)** | ✅ Expected to work | Kernel 6.x+ recommended |
-| **macOS** | ✅ Expected to work | GPU monitoring not available |
-| **Windows (WSL2)** | ✅ Expected to work | GPU monitoring not available |
-
-### GPU Monitoring (optional)
-
-GPU metrics are optional — rocCLAW works without them. When available, live utilization, VRAM, temperature, power, and clock data appear in the System and Graph tabs.
-
-| GPU | Detection |
-|-----|-----------|
-| **Ryzen AI MAX+ 395** | ROCm |
-| **Ryzen AI 300 series** | ROCm |
-| **Radeon RX 7900 XTX** | ROCm |
-| **Other AMD GPUs** | ROCm or sysfs fallback |
-
-ROCm is checked first (`rocminfo` + `rocm-smi`). If unavailable, rocCLAW falls back to `lspci` + DRM sysfs for basic GPU info — no ROCm install required.
+For supported platforms and GPU compatibility details, see [Compatibility](docs/COMPATIBILITY.md).
 
 ---
 
@@ -371,6 +348,7 @@ See [Contributing](docs/CONTRIBUTING.md) for full development setup.
 |----------|-------------|
 | [Install Guide](docs/INSTALL.md) | Step-by-step Ubuntu setup with SSH tunnels, Tailscale, env vars |
 | [Architecture](docs/ARCHITECTURE.md) | Technical deep-dive: data flow, API routes, durability model, security |
+| [Compatibility](docs/COMPATIBILITY.md) | Supported platforms and GPU monitoring details |
 | [Contributing](docs/CONTRIBUTING.md) | Development setup, testing, commit conventions, PR guidelines |
 | [Permissions & Sandboxing](docs/permissions-sandboxing.md) | Security model, sandbox modes, exec approvals, tool policies |
 | [Changelog](docs/CHANGELOG.md) | Release history |
@@ -383,7 +361,7 @@ See [Contributing](docs/CONTRIBUTING.md) for full development setup.
 
 <br/>
 
-<sub>Built with [Ollama](https://ollama.com) · [Kimi K2](https://ollama.com/library/kimi-k2) · [GLM 5.1](https://ollama.com/library/glm-5.1) · [Claude](https://www.anthropic.com/claude)</sub>
+<sub>Built by [OpenClaw](https://github.com/openclaw) agents using [Ollama](https://ollama.com) ([Kimi K2](https://ollama.com/library/kimi-k2), [GLM 5.1](https://ollama.com/library/glm-5.1)) and [Claude](https://www.anthropic.com/claude)</sub>
 
 <sub>rocCLAW is a community project — not affiliated with or endorsed by AMD.</sub>
 
