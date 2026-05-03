@@ -28,7 +28,7 @@ The operator dashboard for [OpenClaw](https://github.com/openclaw) — manage a 
 - [What You Can Do](#what-you-can-do)
 - [Use Cases](#-use-cases)
 - [Monitor Your Hardware](#-monitor-your-hardware)
-- [Skills & ClawHub](#-skills--clawhub)
+- [Built-in Skills](#-built-in-skills)
 - [Dashboard at a Glance](#-dashboard-at-a-glance)
 - [Installation](#installation)
 - [Setup Guides](#setup-guides)
@@ -68,7 +68,7 @@ Not every task needs a cloud model. Run local LLMs for the bulk of the work and 
 
 **Cloud agents** use high-capability models (Claude, GPT, Gemini) for the hard stuff — complex reasoning, multi-step planning, code generation that needs deep context. You only pay when you need the horsepower.
 
-**Per-agent model selection** — Assign each agent exactly the model it needs. Your cron agent runs locally on Kimi K2. Your planning agent calls Claude. Skills like Plan First and Agent Debate go to cloud; ReAct Loop and GitHub go to local. Mix and match.
+**Per-agent model selection** — Assign each agent exactly the model it needs. Your cron agent runs locally on Kimi K2. Your planning agent calls Claude. Pair it with the right [built-in skills](#-built-in-skills) — Plan First and Agent Debate for cloud agents, ReAct Loop and GitHub for local. Mix and match.
 
 **Token usage dashboards** — See spend per agent, per model, in real time. Know exactly which agents are consuming cloud tokens and whether they should be. No surprise bills.
 
@@ -145,7 +145,7 @@ When your agents run on local hardware, you need to see how that hardware is doi
 
 ---
 
-## 🧠 Skills & ClawHub
+## 🧠 Built-in Skills
 
 <div align="center">
 <table>
@@ -159,17 +159,24 @@ When your agents run on local hardware, you need to see how that hardware is doi
 
 Same agent, same hardware. The right skills change what it can do.
 
-Browse and install skills from [**ClawHub**](https://clawhub.ai) — the public skill registry for OpenClaw — right from the dashboard. Assign skills per-agent with one click. Skills help you route work effectively — give your local agent ReAct Loop for routine tasks and your cloud agent Plan First for complex planning.
+rocCLAW ships with 12 featured skills you can assign per-agent directly from the dashboard — no config files, no CLI. Give your local agent the skills it needs for routine work, and equip your cloud agent for complex reasoning.
 
-| Category | Examples |
-|----------|----------|
-| **Agent Behavior** | Proactive Agent, Self-Improving Agent |
-| **Problem Solving** | Plan First, ReAct Loop |
-| **Quality & Accuracy** | Agent Debate, Self-Critique |
-| **Development** | Team Code, Skill Creator, GitHub |
-| **Multi-Agent** | Team Orchestration, Multi-Agent Collaboration |
+| Category | Skill | What it does |
+|----------|-------|-------------|
+| **Agent Behavior** | Proactive Agent | Anticipates needs, self-schedules crons, maintains a working buffer |
+| | Self-Improving Agent | Self-reflection, self-criticism, self-learning — evaluates and improves permanently |
+| **Problem Solving** | Plan First | Generates a detailed plan before execution (Plan-and-Solve research) |
+| | ReAct Loop | Interleaves reasoning with actions, observing results to inform next steps |
+| **Quality & Accuracy** | Agent Debate | Multiple agents debate answers to reduce hallucinations |
+| | Self-Critique | Structured self-review against quality criteria before finalizing |
+| **Development** | Team Code | Coordinate multiple agents as a dev team working in parallel |
+| | Skill Creator | Build new skills from scratch, validated against the AgentSkills spec |
+| | GitHub | Issues, PRs, CI runs, code review via `gh` CLI |
+| | Git Workflows | Rebasing, bisecting, worktrees, reflog recovery, merge conflicts |
+| **Multi-Agent** | Agent Team Orchestration | Defined roles, task lifecycles, handoff protocols, review workflows |
+| | Multi-Agent Collaboration | Intent recognition, intelligent routing, reflection across agent teams |
 
-Browse the full catalog at [clawhub.ai](https://clawhub.ai).
+Skills are **per-agent** — assign different combinations to each agent to match its role in your fleet. Need more? Browse and install additional skills from [ClawHub](https://clawhub.ai) — integrated directly into rocCLAW with one-click install.
 
 ---
 
@@ -183,7 +190,7 @@ Browse the full catalog at [clawhub.ai](https://clawhub.ai).
 |-----|-------------|
 | **Agents** | Fleet grid with search, filter, status indicators, and avatars |
 | **Chat** | Real-time streaming chat with thinking traces and tool calls |
-| **Skills** | Browse and install skills from ClawHub per-agent |
+| **Skills** | Assign built-in skills per-agent and manage skill configurations |
 | **Connection** | Gateway setup with guided install for Local, Client, Cloud, and Remote |
 | **System** | Live CPU, GPU (AMD ROCm + fallback), memory, disk, and network gauges |
 | **Graph** | Time-series charts with 5m / 10m / 30m ranges |
