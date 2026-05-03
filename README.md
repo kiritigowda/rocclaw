@@ -4,9 +4,9 @@
 
 # rocCLAW
 
-**The dashboard for your AI agents.**
+**Run AI agents on your hardware. Use cloud only when you need it.**
 
-Monitor, chat, configure, and schedule your OpenClaw agents — from any browser, anywhere.
+The operator dashboard for [OpenClaw](https://github.com/openclaw) — manage a hybrid fleet of local and cloud agents from any browser. Your GPUs stay busy, your cloud tokens go only where they matter.
 
 [![Node.js](https://img.shields.io/badge/Node.js-20.9%2B-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org)
 [![GitHub Release](https://img.shields.io/github/v/release/simoncatbot/rocclaw?include_prereleases&logo=github)](https://github.com/simoncatbot/rocclaw/releases)
@@ -14,13 +14,61 @@ Monitor, chat, configure, and schedule your OpenClaw agents — from any browser
 
 </div>
 
+<!-- TODO: Add hero screenshot of the dashboard here -->
+<!-- <img src="public/screenshots/dashboard-hero.png" alt="rocCLAW Dashboard" width="100%" /> -->
+
+---
+
+## Table of Contents
+
+- [Why rocCLAW?](#why-rocclaw)
+- [Local + Cloud Hybrid Fleet](#-local--cloud-hybrid-fleet)
+- [Quick Start](#quick-start)
+- [What You Can Do](#what-you-can-do)
+- [Monitor Your Hardware](#-monitor-your-hardware)
+- [Skills & ClawHub](#-skills--clawhub)
+- [Dashboard at a Glance](#-dashboard-at-a-glance)
+- [Installation](#installation)
+- [Setup Guides](#setup-guides)
+- [Tested Configurations](#tested-configurations)
+- [Development](#development)
+- [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
+
 ---
 
 ## Why rocCLAW?
 
-OpenClaw agents run on your terms — terminal-driven, scriptable, headless. That's the strength. But when your gateway lives on a VPS, a Pi, or another room, managing agents over SSH gets old fast.
+Cloud AI tokens add up fast. If you're running agents around the clock — handling cron jobs, monitoring tasks, file operations, routine queries — paying cloud rates for every request is wasteful, especially when capable open-weight models can run on hardware you already own.
 
-**rocCLAW is the browser interface for OpenClaw.** Point it at any gateway — local, Tailscale, or SSH-tunneled — and your entire agent fleet is right there. Chat, configure, monitor, schedule. No SSH required.
+**rocCLAW lets you build a hybrid agent fleet.** Local models handle the daily workload at zero token cost. Cloud models step in only for the tasks that need them — complex reasoning, multi-step planning, deep context. You control the split per-agent, and the dashboard shows you exactly where every token goes.
+
+Point rocCLAW at any OpenClaw gateway — on your desk, across the network, or SSH-tunneled from a remote server — and your entire fleet is right there. Chat, configure, schedule, monitor. No SSH, no terminal juggling, no guessing what your agents are doing.
+
+```
+Browser (React)  <── HTTP / SSE ──>  rocCLAW Server  <── WebSocket ──>  OpenClaw Gateway
+                                     (Next.js + SQLite)                  (your hardware)
+```
+
+Your browser never talks to the gateway directly. rocCLAW proxies everything securely — authentication, event replay, rate limiting — and your tokens never leave the server.
+
+---
+
+## 🏗️ Local + Cloud Hybrid Fleet
+
+Not every task needs a cloud model. Run local LLMs for the bulk of the work and reserve cloud tokens for what actually needs them.
+
+<!-- TODO: Add screenshot showing the token usage dashboard with per-agent/per-model breakdown -->
+
+**Local agents** run on your hardware with open-weight models via [Ollama](https://ollama.com), vLLM, or any local provider. They handle the daily load — file operations, simple queries, monitoring, scheduled tasks. Zero token cost.
+
+**Cloud agents** use high-capability models (Claude, GPT, Gemini) for the hard stuff — complex reasoning, multi-step planning, code generation that needs deep context. You only pay when you need the horsepower.
+
+**Per-agent model selection** — Assign each agent exactly the model it needs. Your cron agent runs locally on Kimi K2. Your planning agent calls Claude. Skills like Plan First and Agent Debate go to cloud; ReAct Loop and GitHub go to local. Mix and match.
+
+**Token usage dashboards** — See spend per agent, per model, in real time. Know exactly which agents are consuming cloud tokens and whether they should be. No surprise bills.
+
+**The result:** maximum hardware utilization, minimum cloud spend. Your local GPUs run warm instead of idle. Your cloud tokens go to tasks that actually need them.
 
 ---
 
@@ -41,98 +89,79 @@ Open [http://localhost:3000](http://localhost:3000), enter your gateway URL (`ws
 openclaw config get gateway.auth.token   # Get your token
 ```
 
-Other install options: [npm](#installation) · [pre-built package](#installation) · [setup guides →](#setup-guides)
+Other install options: [npm](#installation) · [pre-built package](#installation) · [full install guide](docs/INSTALL.md) · [setup guides →](#setup-guides)
 
 ---
 
 ## What You Can Do
 
-### 💬 Chat with any agent
+<!-- TODO: Add screenshot showing the chat interface with thinking traces -->
 
-Real-time streaming conversations with thinking traces, tool call visibility, and inline exec approvals. Approve or deny shell commands right in the chat — allow-once, allow-always, or deny. No context switching, no copy-pasting tokens.
+**Chat with any agent** — Real-time streaming with thinking traces, tool call visibility, and inline exec approvals. Approve or deny shell commands right in the chat — allow-once, allow-always, or deny.
 
-### ⏰ Put agents on autopilot
+<!-- TODO: Add screenshot showing the tasks/cron dashboard -->
 
-Schedule cron jobs with drag-and-drop. Interval, daily, or cron expression — your agents run on your schedule. No crontab editing required.
+**Put agents on autopilot** — Schedule cron jobs with drag-and-drop. Interval, daily, or cron expression — your agents run on your schedule without crontab editing. Local agents handle scheduled tasks at zero cost.
 
-### ⚙️ Configure without SSH
+<!-- TODO: Add screenshot showing the agent configuration panel -->
 
-Edit any agent's 7 personality files (SOUL, IDENTITY, USER, AGENTS, TOOLS, HEARTBEAT, MEMORY) directly in the browser. Adjust permissions — exec mode, sandbox, workspace access, tool profiles — without touching the terminal.
+**Configure without SSH** — Edit any agent's personality files (SOUL, IDENTITY, USER, AGENTS, TOOLS, HEARTBEAT, MEMORY) and permissions directly in the browser. Set per-agent model selection to route work to local or cloud.
 
-### 🖥️ Access from anywhere
+**Access from anywhere** — Connect to any gateway via LAN, Tailscale, or SSH tunnel. Your gateway stays secure; you stay mobile.
 
-Connect to any OpenClaw gateway via LAN, Tailscale, or SSH tunnel. Your gateway stays secure; you stay mobile.
-
-### 🔒 Stay in control
-
-Three-layer security: network policy refuses public binding without an access token, cookie-based auth guards all API routes, and a method allowlist on the gateway adapter prevents unauthorized operations. Ed25519 device identity provides cryptographic authentication. Your tokens never leave the server — the browser only sees `hasToken: true`.
-
-Per-agent controls: exec mode · sandbox isolation · workspace access · tools profile · command security. See [Permissions & Sandboxing](docs/permissions-sandboxing.md) for details.
+**Stay in control** — Three-layer security: network policy, cookie-based auth, and a method allowlist on the gateway adapter. Ed25519 device identity for cryptographic authentication. Per-agent controls for exec mode, sandbox isolation, workspace access, and tool profiles. See [Permissions & Sandboxing](docs/permissions-sandboxing.md) for details.
 
 ---
 
-## 🧠 Make Agents Smarter with Skills
+## 📊 Monitor Your Hardware
 
-Browse and install skills from [**ClawHub**](https://clawhub.ai) — the public skill registry for OpenClaw — right from the dashboard. Assign skills per-agent with one click. No editing config files, no restarting the gateway.
+<!-- TODO: Add screenshot showing system metrics and graph view -->
 
-Skills are **per-agent** — give your main agent Proactive Agent and your dev agent Team Code. Mix and match for the behavior you want.
+When your agents run on local hardware, you need to see how that hardware is doing. rocCLAW provides live system metrics so you know whether your GPUs are earning their keep or sitting idle.
 
-**Agent Behavior**
-- 🦞 **Proactive Agent** — Anticipates needs, self-schedules crons, maintains a working buffer. Turns task-followers into proactive partners
-- 🔄 **Self-Improving Agent** — Self-reflection, self-criticism, self-learning. Evaluates its own work and improves permanently
+**Live gauges** — CPU, memory, GPU utilization, VRAM, disk, and network. Works for local machines **and** remote gateways — "Remote" vs "Local" labels are applied automatically.
 
-**Problem Solving**
-- 📋 **Plan First** — Generates a detailed plan before execution. Based on Plan-and-Solve research
-- 🔁 **ReAct Loop** — Interleaves reasoning with actions, observing results to inform next steps
+**Time-series graphs** — Track resource usage over 5m, 10m, or 30m windows. Spot bottlenecks, see when your GPU is maxed out, and decide whether a task should move to cloud.
 
-**Quality & Accuracy**
-- ⚖️ **Agent Debate** — Multiple agents independently answer, then critique each other to reduce hallucinations
-- 🔍 **Self-Critique** — Structured self-review against quality criteria before finalizing. Based on Constitutional AI research
+**AMD GPU support** — ROCm-first detection with automatic sysfs fallback. Full metrics for RDNA 3 / 3.5 GPUs including VRAM, temperature, power draw, and clock speeds. See [tested GPU configurations](#gpu-configurations) below.
 
-**Development**
-- 👨‍💻 **Team Code** — Coordinate multiple agents as a dev team working in parallel on your codebase
-- 🛠️ **Skill Creator** — Build new skills from scratch, validated against the AgentSkills spec
-- 🐙 **GitHub** — Issues, PRs, CI runs, code review via `gh` CLI
+**Token usage tracking** — Per-agent and per-model breakdowns. See exactly which agents are consuming cloud tokens and how much each model costs you.
 
-**Multi-Agent**
-- 🎯 **Agent Team Orchestration** — Defined roles, task lifecycles, handoff protocols, review workflows
-- 🤝 **Multi-Agent Collaboration** — Intent recognition, intelligent routing, reflection across agent teams
+---
+
+## 🧠 Skills & ClawHub
+
+Browse and install skills from [**ClawHub**](https://clawhub.ai) — the public skill registry for OpenClaw — right from the dashboard. Assign skills per-agent with one click. Skills help you route work effectively — give your local agent ReAct Loop for routine tasks and your cloud agent Plan First for complex planning.
+
+| Category | Examples |
+|----------|----------|
+| **Agent Behavior** | Proactive Agent, Self-Improving Agent |
+| **Problem Solving** | Plan First, ReAct Loop |
+| **Quality & Accuracy** | Agent Debate, Self-Critique |
+| **Development** | Team Code, Skill Creator, GitHub |
+| **Multi-Agent** | Team Orchestration, Multi-Agent Collaboration |
 
 Browse the full catalog at [clawhub.ai](https://clawhub.ai).
 
 ---
 
-## 🏗️ Run a Hybrid Local + Cloud Fleet
+## 📋 Dashboard at a Glance
 
-Not every task needs a cloud model. rocCLAW lets you build a **hybrid agent fleet** — local LLMs handle routine work, cloud models step in for complex reasoning — and manage it all from one dashboard.
-
-**How it works:**
-
-1. **Local agents** run on your hardware with open-weight models (via Ollama, vLLM, or any local provider). They handle the daily load — file operations, simple queries, monitoring, cron tasks. Zero token cost.
-
-2. **Cloud agents** use high-capability models for the hard stuff — complex reasoning, multi-step planning, code generation that needs deep context. You only pay when you need the horsepower.
-
-3. **Per-agent skills** route the right work to the right tier. Assign Plan First and Agent Debate to your cloud agent. Give ReAct Loop and GitHub to your local agent. Skills + model selection = automatic workload tiering.
-
-4. **Token usage dashboards** show you exactly where your spend goes — per agent, per model. No surprise bills.
-
-**The result: maximum hardware utilization, minimum cloud spend.** Your local GPUs run warm instead of idle. Your cloud tokens go to tasks that actually need them.
-
----
-
-## 📊 System Monitoring
-
-Live CPU, memory, GPU (AMD ROCm + fallback), disk, and network metrics with time-series graph views. Works for local machines **and** remote gateways — see "Remote" vs "Local" labels automatically.
-
-Per-agent and aggregate token usage dashboards so you know exactly what each agent is costing you.
-
----
-
-## Dashboard Overview
+<!-- TODO: Add screenshot showing the full dashboard with multiple tabs open -->
 
 9 toggleable tabs, shown side-by-side:
 
-**Agents** · **Chat** · **Skills** · **Connection** · **System** · **Graph** · **Tasks** · **Tokens** · **Settings**
+| Tab | What it does |
+|-----|-------------|
+| **Agents** | Fleet grid with search, filter, status indicators, and avatars |
+| **Chat** | Real-time streaming chat with thinking traces and tool calls |
+| **Skills** | Browse and install skills from ClawHub per-agent |
+| **Connection** | Gateway setup with guided install for Local, Client, Cloud, and Remote |
+| **System** | Live CPU, GPU (AMD ROCm + fallback), memory, disk, and network gauges |
+| **Graph** | Time-series charts with 5m / 10m / 30m ranges |
+| **Tasks** | Cron job kanban board with drag-and-drop scheduling |
+| **Tokens** | Per-agent and per-model token usage tracking |
+| **Settings** | Appearance, gateway, model, and agent configuration |
 
 ---
 
@@ -164,6 +193,8 @@ cd rocclaw
 npm install
 npm run dev
 ```
+
+For detailed Ubuntu setup with SSH tunnels, Tailscale, and environment variables, see the [full install guide](docs/INSTALL.md).
 
 ---
 
@@ -260,8 +291,8 @@ npm run build        # Production build
 npm run start        # Build + start production server
 npm run typecheck    # TypeScript strict checking
 npm run lint         # ESLint
-npm run test         # Unit tests (Vitest, 145 files, 1,091 tests)
-npm run e2e          # E2E tests (Playwright, 11 specs)
+npm run test         # Unit tests (Vitest)
+npm run e2e          # E2E tests (Playwright)
 ```
 
 Run all checks before submitting:
@@ -291,6 +322,7 @@ See [Contributing](docs/CONTRIBUTING.md) for full development setup.
 
 | Document | Description |
 |----------|-------------|
+| [Install Guide](docs/INSTALL.md) | Step-by-step Ubuntu setup with SSH tunnels, Tailscale, env vars |
 | [Architecture](docs/ARCHITECTURE.md) | Technical deep-dive: data flow, API routes, durability model, security |
 | [Contributing](docs/CONTRIBUTING.md) | Development setup, testing, commit conventions, PR guidelines |
 | [Permissions & Sandboxing](docs/permissions-sandboxing.md) | Security model, sandbox modes, exec approvals, tool policies |
@@ -308,4 +340,4 @@ See [Contributing](docs/CONTRIBUTING.md) for full development setup.
 
 > **Disclaimer:** rocCLAW is a community project and is not affiliated with, endorsed by, or an official product of AMD.
 
-**Acknowledgments:** Built with help from [Ollama](https://ollama.com) models — [Kimi K2](https://huggingface.co/moonshotai/Kimi-K2), [GLM 5.1](https://huggingface.co/THUDM/GLM-5.1), and [Claude](https://www.anthropic.com/claude).
+**Acknowledgments:** Agents built using [Ollama](https://ollama.com) models — [Kimi K2](https://ollama.com/library/kimi-k2), [GLM 5.1](https://ollama.com/library/glm4), and [Claude](https://www.anthropic.com/claude).
