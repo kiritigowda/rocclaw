@@ -496,12 +496,13 @@ export function PhotoBoothDashboard() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {comfyuiStatus === "offline" && (
+          {(comfyuiStatus === "offline" || comfyuiStatus === "checking") && (
             <button
               onClick={startComfyUI}
               disabled={startingComfyUI}
               aria-label={startingComfyUI ? "Starting ComfyUI..." : "Start ComfyUI"}
-              className="ui-btn-primary flex items-center gap-1.5 !min-h-0 px-2.5 py-1 text-[10px] font-medium"
+              className="ui-btn-primary flex items-center gap-1.5 !min-h-0 px-2.5 py-1 text-[10px] font-medium shadow-sm hover:shadow"
+              style={{ backgroundColor: '#3b82f6', color: 'white' }}
             >
               {startingComfyUI ? (
                 <><Loader className="h-3 w-3 animate-spin" /> Starting...</>
