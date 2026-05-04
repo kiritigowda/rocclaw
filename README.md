@@ -4,9 +4,9 @@
 
 # rocCLAW
 
-**The dashboard for your AI agents.**
+**Run AI agents on your hardware. Use cloud only when you need it.**
 
-Monitor, chat, configure, and schedule your OpenClaw agents — from any browser, anywhere.
+The operator dashboard for [OpenClaw](https://github.com/openclaw) — manage a hybrid fleet of local and cloud agents from any browser. Your GPUs stay busy, your cloud tokens go only where they matter.
 
 [![Node.js](https://img.shields.io/badge/Node.js-20.9%2B-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org)
 [![GitHub Release](https://img.shields.io/github/v/release/simoncatbot/rocclaw?include_prereleases&logo=github)](https://github.com/simoncatbot/rocclaw/releases)
@@ -16,127 +16,217 @@ Monitor, chat, configure, and schedule your OpenClaw agents — from any browser
 
 ---
 
-## Why rocCLAW?
+## Table of Contents
 
-OpenClaw agents run on your terms — terminal-driven, scriptable, headless. That's the strength. But when your gateway lives on a VPS, a Pi, or another room, managing agents over SSH gets old fast.
-
-**rocCLAW is the browser interface for OpenClaw.** Point it at any gateway — local, Tailscale, or SSH-tunneled — and your entire agent fleet is right there. Chat, configure, monitor, schedule. No SSH required.
+- [Why rocCLAW?](#why-rocclaw)
+- [Quick Start](#quick-start)
+- [Local + Cloud Hybrid Fleet](#local--cloud-hybrid-fleet)
+- [What You Can Do](#what-you-can-do)
+- [Monitor Your Hardware](#monitor-your-hardware)
+- [Built-in Skills](#built-in-skills)
+- [Use Cases](#use-cases)
+- [Dashboard at a Glance](#dashboard-at-a-glance)
+- [Installation](#installation)
+- [Setup Guides](#setup-guides)
+- [Requirements & Compatibility](#requirements--compatibility)
+- [Development](#development)
+- [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
 
 ---
 
-## Quick Start
+<a id="why-rocclaw"></a>
+
+## 🤖 Why rocCLAW?
+
+<div align="center">
+<img src="public/screenshots/bot-family.png" alt="A hybrid fleet of AI agents — local and cloud, managed from one dashboard" width="680" />
+</div>
+
+Most AI tools wait for you to type a prompt, return a response, and stop. An agent is different — it takes an objective, breaks it into steps, executes across tools and systems, and keeps running on a schedule without manual intervention. OpenClaw agents can monitor log files, run CI pipelines, triage issues, sync data between services, and operate continuously on schedules you define.
+
+The problem: running agents around the clock on cloud models gets expensive. If an agent is checking system health every five minutes or processing a queue of routine tasks, those tokens add up — especially when open-weight models running on your own hardware can handle the same work at zero marginal cost.
+
+**rocCLAW lets you build a hybrid agent fleet.** Local models handle the daily workload at zero token cost. Cloud models step in only for the tasks that need them — complex reasoning, multi-step planning, deep context. You control the split per-agent, and the dashboard shows you exactly where every token goes.
+
+Point rocCLAW at any OpenClaw gateway — on your desk, across the network, or SSH-tunneled from a remote server — and your entire fleet is right there. Chat, configure, schedule, monitor. No SSH, no terminal juggling, no guessing what your agents are doing.
+
+```
+Browser  ←── HTTP / SSE ──→  rocCLAW Server  ←── WebSocket ──→  OpenClaw Gateway
+(React)                      (Next.js + SQLite)                  (local GPU / cloud API)
+```
+
+Your browser never talks to the gateway directly. rocCLAW proxies everything securely — authentication, event replay, rate limiting — and your tokens never leave the server.
+
+---
+
+<a id="quick-start"></a>
+
+## 🚀 Quick Start
 
 **Prerequisites:** Node.js 20.9+ and a running OpenClaw gateway.
 
+Install via npm, pre-built package, or from source — see [Installation](#installation) for all options.
+
 ```bash
-git clone https://github.com/simonCatBot/rocclaw.git
-cd rocclaw
-npm install
-npm run dev
+npm install -g @simoncatbot/rocclaw
+rocclaw
 ```
 
-Open [http://localhost:3000](http://localhost:3000), enter your gateway URL (`ws://127.0.0.1:18789`), paste your token, and click **Save Settings**.
+Open [http://localhost:3000](http://localhost:3000), enter your gateway URL (`ws://127.0.0.1:18789`), paste your token, and click **Connect**.
 
 ```bash
 openclaw config get gateway.auth.token   # Get your token
 ```
 
-Other install options: [npm](#installation) · [pre-built package](#installation) · [setup guides →](#setup-guides)
+See also: [full install guide](docs/INSTALL.md) · [setup guides →](#setup-guides)
 
 ---
 
-## What You Can Do
+<a id="local--cloud-hybrid-fleet"></a>
 
-### 💬 Chat with any agent
+## 🏗️ Local + Cloud Hybrid Fleet
 
-Real-time streaming conversations with thinking traces, tool call visibility, and inline exec approvals. Approve or deny shell commands right in the chat — allow-once, allow-always, or deny. No context switching, no copy-pasting tokens.
+<!-- TODO: Add screenshot showing the token usage dashboard with per-agent/per-model breakdown -->
 
-### ⏰ Put agents on autopilot
+**Local agents** run on your hardware with open-weight models via [Ollama](https://ollama.com), vLLM, or any local provider. They handle the predictable workload — log monitoring, scheduled reports, file processing, data syncing, health checks. Zero token cost, and they retain memory across sessions so they improve without burning cloud credits.
 
-Schedule cron jobs with drag-and-drop. Interval, daily, or cron expression — your agents run on your schedule. No crontab editing required.
+**Cloud agents** use high-capability models (Claude, GPT, Gemini) for tasks that need it — complex reasoning, multi-step planning, code generation with deep context.
 
-### ⚙️ Configure without SSH
+**Per-agent model selection** — Assign each agent exactly the model it needs. Your cron agent runs locally on Kimi K2. Your planning agent calls Claude. Pair it with the right [built-in skills](#built-in-skills) — Plan First and Agent Debate for cloud agents, ReAct Loop and GitHub for local. Mix and match.
 
-Edit any agent's 7 personality files (SOUL, IDENTITY, USER, AGENTS, TOOLS, HEARTBEAT, MEMORY) directly in the browser. Adjust permissions — exec mode, sandbox, workspace access, tool profiles — without touching the terminal.
+**Token usage dashboards** — See spend per agent, per model, in real time. Know exactly which agents are consuming cloud tokens and whether they should be.
 
-### 🖥️ Access from anywhere
-
-Connect to any OpenClaw gateway via LAN, Tailscale, or SSH tunnel. Your gateway stays secure; you stay mobile.
-
-### 🔒 Stay in control
-
-Three-layer security: network policy refuses public binding without an access token, cookie-based auth guards all API routes, and a method allowlist on the gateway adapter prevents unauthorized operations. Ed25519 device identity provides cryptographic authentication. Your tokens never leave the server — the browser only sees `hasToken: true`.
-
-Per-agent controls: exec mode · sandbox isolation · workspace access · tools profile · command security. See [Permissions & Sandboxing](docs/permissions-sandboxing.md) for details.
+**The result:** maximum hardware utilization, minimum cloud spend. Your local GPUs stay utilized instead of idle. Cloud tokens go only to tasks that need them.
 
 ---
 
-## 🧠 Make Agents Smarter with Skills
+<a id="what-you-can-do"></a>
 
-Browse and install skills from [**ClawHub**](https://clawhub.ai) — the public skill registry for OpenClaw — right from the dashboard. Assign skills per-agent with one click. No editing config files, no restarting the gateway.
+## ⚡ What You Can Do
 
-Skills are **per-agent** — give your main agent Proactive Agent and your dev agent Team Code. Mix and match for the behavior you want.
+<!-- TODO: Add screenshot showing the chat interface with thinking traces -->
 
-**Agent Behavior**
-- 🦞 **Proactive Agent** — Anticipates needs, self-schedules crons, maintains a working buffer. Turns task-followers into proactive partners
-- 🔄 **Self-Improving Agent** — Self-reflection, self-criticism, self-learning. Evaluates its own work and improves permanently
+**Chat with any agent** — Real-time streaming with thinking traces, tool call visibility, and inline exec approvals. Approve or deny shell commands right in the chat — allow-once, allow-always, or deny.
 
-**Problem Solving**
-- 📋 **Plan First** — Generates a detailed plan before execution. Based on Plan-and-Solve research
-- 🔁 **ReAct Loop** — Interleaves reasoning with actions, observing results to inform next steps
+<!-- TODO: Add screenshot showing the tasks/cron dashboard -->
 
-**Quality & Accuracy**
-- ⚖️ **Agent Debate** — Multiple agents independently answer, then critique each other to reduce hallucinations
-- 🔍 **Self-Critique** — Structured self-review against quality criteria before finalizing. Based on Constitutional AI research
+**Put agents on autopilot** — Schedule recurring jobs with drag-and-drop — run every 5 minutes, daily at 9am, or any cron expression. Agents retain context across sessions and act on heartbeat schedules independently.
 
-**Development**
-- 👨‍💻 **Team Code** — Coordinate multiple agents as a dev team working in parallel on your codebase
-- 🛠️ **Skill Creator** — Build new skills from scratch, validated against the AgentSkills spec
-- 🐙 **GitHub** — Issues, PRs, CI runs, code review via `gh` CLI
+<!-- TODO: Add screenshot showing the agent configuration panel -->
 
-**Multi-Agent**
-- 🎯 **Agent Team Orchestration** — Defined roles, task lifecycles, handoff protocols, review workflows
-- 🤝 **Multi-Agent Collaboration** — Intent recognition, intelligent routing, reflection across agent teams
+**Configure without SSH** — Edit any agent's personality files and permissions directly in the browser. Each agent has 7 personality files that define its behavior:
 
-Browse the full catalog at [clawhub.ai](https://clawhub.ai).
+<details>
+<summary>IDENTITY · SOUL · USER · AGENTS · TOOLS · HEARTBEAT · MEMORY</summary>
+
+`IDENTITY.md` → name, creature type, vibe, emoji, avatar · `SOUL.md` → core truths, boundaries, personality · `USER.md` → context about you (name, pronouns, timezone) · `AGENTS.md` → operating rules and workflows · `TOOLS.md` → tool usage guidelines · `HEARTBEAT.md` → periodic check configuration · `MEMORY.md` → persistent memory and learned context
+
+</details>
+
+**Access from anywhere** — Connect to any gateway via LAN, Tailscale, or SSH tunnel. Your gateway stays secure; you stay mobile.
+
+**Stay in control** — Per-agent exec permissions, sandbox isolation, and cryptographic device authentication. See [Permissions & Sandboxing](docs/permissions-sandboxing.md) for the full security model.
 
 ---
 
-## 🏗️ Run a Hybrid Local + Cloud Fleet
+<a id="monitor-your-hardware"></a>
 
-Not every task needs a cloud model. rocCLAW lets you build a **hybrid agent fleet** — local LLMs handle routine work, cloud models step in for complex reasoning — and manage it all from one dashboard.
+## 📊 Monitor Your Hardware
 
-**How it works:**
+<!-- TODO: Add screenshot showing system metrics and graph view -->
 
-1. **Local agents** run on your hardware with open-weight models (via Ollama, vLLM, or any local provider). They handle the daily load — file operations, simple queries, monitoring, cron tasks. Zero token cost.
+When your agents run on local hardware, you need to see how that hardware is doing. rocCLAW provides live system metrics so you know whether your GPUs are earning their keep or sitting idle.
 
-2. **Cloud agents** use high-capability models for the hard stuff — complex reasoning, multi-step planning, code generation that needs deep context. You only pay when you need the horsepower.
+**Live gauges** — CPU, memory, GPU utilization, VRAM, disk, and network. Works for local machines **and** remote gateways — "Remote" vs "Local" labels are applied automatically.
 
-3. **Per-agent skills** route the right work to the right tier. Assign Plan First and Agent Debate to your cloud agent. Give ReAct Loop and GitHub to your local agent. Skills + model selection = automatic workload tiering.
+**Time-series graphs** — Track resource usage over 5m, 10m, or 30m windows. Spot bottlenecks, see when your GPU is maxed out, and decide whether a task should move to cloud.
 
-4. **Token usage dashboards** show you exactly where your spend goes — per agent, per model. No surprise bills.
-
-**The result: maximum hardware utilization, minimum cloud spend.** Your local GPUs run warm instead of idle. Your cloud tokens go to tasks that actually need them.
+**AMD GPU support** — ROCm-first detection with automatic sysfs fallback. Full metrics for AMD GPUs including VRAM, temperature, power draw, and clock speeds. See [Requirements & Compatibility](#requirements--compatibility) for details.
 
 ---
 
-## 📊 System Monitoring
+<a id="built-in-skills"></a>
 
-Live CPU, memory, GPU (AMD ROCm + fallback), disk, and network metrics with time-series graph views. Works for local machines **and** remote gateways — see "Remote" vs "Local" labels automatically.
+## 🧠 Built-in Skills
 
-Per-agent and aggregate token usage dashboards so you know exactly what each agent is costing you.
+<div align="center">
+<table>
+<tr>
+<td align="center"><img src="public/screenshots/bot-before-skills.png" alt="Agent before skills — basic tools" width="420" /><br/><em>Before: basic tools</em></td>
+<td align="center"><strong>+ Skills</strong><br/>→</td>
+<td align="center"><img src="public/screenshots/bot-after-skills.png" alt="Agent after skills — rocket scientist" width="420" /><br/><em>After: rocket scientist</em></td>
+</tr>
+</table>
+</div>
+
+Same agent, same hardware. The right skills change what it can do.
+
+rocCLAW ships with 12 featured skills you can assign per-agent directly from the dashboard — no config files, no CLI. Give your local agent the skills it needs for routine work, and equip your cloud agent for complex reasoning.
+
+| Category | Skill | What it does |
+|----------|-------|-------------|
+| **Agent Behavior** | Proactive Agent | Anticipates needs, self-schedules crons, maintains a working buffer |
+| | Self-Improving Agent | Self-reflection, self-criticism, self-learning — evaluates and improves permanently |
+| **Problem Solving** | Plan First | Generates a detailed plan before execution (Plan-and-Solve research) |
+| | ReAct Loop | Interleaves reasoning with actions, observing results to inform next steps |
+| **Quality & Accuracy** | Agent Debate | Multiple agents debate answers to reduce hallucinations |
+| | Self-Critique | Structured self-review against quality criteria before finalizing |
+| **Development** | Team Code | Coordinate multiple agents as a dev team working in parallel |
+| | Skill Creator | Build new skills from scratch, validated against the AgentSkills spec |
+| | GitHub | Issues, PRs, CI runs, code review via `gh` CLI |
+| | Git Workflows | Rebasing, bisecting, worktrees, reflog recovery, merge conflicts |
+| **Multi-Agent** | Agent Team Orchestration | Defined roles, task lifecycles, handoff protocols, review workflows |
+| | Multi-Agent Collaboration | Intent recognition, intelligent routing, reflection across agent teams |
+
+Skills are **per-agent** — assign different combinations to each agent to match its role in your fleet. Need more? Browse and install additional skills from [ClawHub](https://clawhub.ai) — integrated directly into rocCLAW with one-click install.
 
 ---
 
-## Dashboard Overview
+<a id="use-cases"></a>
 
-9 toggleable tabs, shown side-by-side:
+## 💡 Use Cases
 
-**Agents** · **Chat** · **Skills** · **Connection** · **System** · **Graph** · **Tasks** · **Tokens** · **Settings**
+<div align="center">
+<img src="public/screenshots/bot-field-guide.png" alt="Agent field guide — each bot cataloged by role and specialization" width="680" />
+</div>
+
+A hybrid fleet makes sense anywhere you have repetitive work alongside tasks that need deeper reasoning.
+
+- **DevOps & infrastructure** — A local agent monitors logs, restarts failed services, and runs nightly backups on a cron schedule. A cloud agent investigates complex outages that require cross-referencing multiple systems and writing incident reports.
+- **Software development** — Local agents handle CI runs, lint fixes, dependency updates, and issue triage. Cloud agents take on architecture planning, complex refactors, and code review that requires deep context across large codebases.
+- **Data pipelines** — Local agents run ETL jobs, validate incoming data, and generate daily summary reports. Cloud agents analyze anomalies, build dashboards from unstructured data, and write the queries that require multi-step reasoning.
+- **System administration** — Local agents check disk usage, rotate credentials, sync configurations across servers. Cloud agents draft migration plans, debug networking issues, and handle tasks that require understanding the full topology.
+- **Research & analysis** — Local agents collect data, scrape sources on a schedule, and organize findings into structured formats. Cloud agents synthesize across sources, identify patterns, and produce the final analysis.
 
 ---
 
-## Installation
+<a id="dashboard-at-a-glance"></a>
+
+## 📋 Dashboard at a Glance
+
+<!-- TODO: Add screenshot showing the full dashboard with multiple tabs open -->
+
+10 toggleable tabs, shown side-by-side:
+
+| Tab | What it does |
+|-----|-------------|
+| **Agents** | Fleet grid with search, filter, status indicators, and avatars |
+| **Chat** | Real-time streaming chat with thinking traces and tool calls |
+| **Skills** | Assign built-in skills per-agent and manage skill configurations |
+| **Connection** | Gateway setup with guided install for Local, Client, Cloud, and Remote |
+| **System** | Live CPU, GPU (AMD ROCm + fallback), memory, disk, and network gauges |
+| **Graph** | Time-series charts with 5m / 10m / 30m ranges |
+| **Tasks** | Cron job kanban board with drag-and-drop scheduling |
+| **Tokens** | Per-agent and per-model token usage tracking |
+| **Photo Booth** | Agent avatar generator with pose and style options |
+| **Settings** | Appearance (light/dark theme), gateway, model, and agent configuration |
+
+---
+
+<a id="installation"></a>
+
+## 📦 Installation
 
 ### npm (recommended)
 
@@ -153,7 +243,7 @@ Download from [GitHub Releases](https://github.com/simoncatbot/rocclaw/releases)
 # Linux/macOS
 curl -L -o rocclaw.tar.gz https://github.com/simoncatbot/rocclaw/releases/latest/download/rocclaw-linux-x64.tar.gz
 tar -xzf rocclaw.tar.gz && cd rocclaw
-npm ci --include=dev && node server/index.js
+npm install && node server/index.js
 ```
 
 ### From source
@@ -165,9 +255,13 @@ npm install
 npm run dev
 ```
 
+For detailed Ubuntu setup with SSH tunnels, Tailscale, and environment variables, see the [full install guide](docs/INSTALL.md).
+
 ---
 
-## Setup Guides
+<a id="setup-guides"></a>
+
+## 🔧 Setup Guides
 
 <details>
 <summary><strong>Same-Machine Setup</strong></summary>
@@ -219,82 +313,24 @@ Keep the terminal open, then connect rocCLAW to `ws://localhost:18789`.
 
 ---
 
-## Agent Personality Files
+<a id="requirements--compatibility"></a>
 
-Every agent has 7 personality files that define its behavior — all editable from the dashboard:
+## ✅ Requirements & Compatibility
 
-`IDENTITY.md` → name, creature type, vibe, emoji, avatar · `SOUL.md` → core truths, boundaries, personality · `USER.md` → context about you (name, pronouns, timezone) · `AGENTS.md` → operating rules and workflows · `TOOLS.md` → tool usage guidelines · `HEARTBEAT.md` → periodic check configuration · `MEMORY.md` → persistent memory and learned context
+| Requirement | Version |
+|-------------|---------|
+| **Node.js** | >= 20.9.0 |
+| **npm** | >= 10 |
+| **OpenClaw Gateway** | Running instance (local or remote) |
+| **ROCm** *(optional)* | >= 7.2.1 (AMD GPU monitoring) |
 
----
-
-## Tested Configurations
-
-### Operating Systems
-
-| OS | Version | Status |
-|----|---------|--------|
-| **Ubuntu** | 24.04 LTS (Noble Numbat) | ✅ Tested |
-| **Ubuntu** | 22.04 LTS (Jammy Jellyfish) | ✅ Tested |
-| Linux (generic) | Kernel 6.x+ | ✅ GPU fallback via sysfs |
-
-### GPU Configurations
-
-rocCLAW supports AMD GPU monitoring with ROCm-first detection and a sysfs fallback for systems without ROCm installed.
-
-| APU / GPU | Architecture | Detection | Notes |
-|-----------|-------------|-----------|-------|
-| **Ryzen AI MAX+ 395** (Strix Halo) | RDNA 3.5 (gfx1151) | ROCm + device ID | 40 CU variant auto-detected as 8060S; 32 CU as 8050S |
-| **Ryzen AI 300 series** (Strix Point) | RDNA 3.5 (gfx1150) | ROCm + device ID | 16 CU → 890M, 12 CU → 880M; handles rocm-smi index mismatches |
-| **Radeon RX 7900 XTX** | RDNA 3 (gfx1100) | ROCm | Full VRAM, temp, power, and clock metrics |
-| **Other AMD GPUs** | Varies | ROCm or sysfs fallback | `lspci` + DRM sysfs on Linux when ROCm is unavailable |
-
-ROCm is checked first (`rocminfo` + `rocm-smi`). If unavailable, rocCLAW falls back to `lspci` + DRM sysfs for basic GPU info — no ROCm install required.
+For supported platforms and GPU compatibility details, see [Compatibility](docs/COMPATIBILITY.md).
 
 ---
 
-## Project Structure
+<a id="development"></a>
 
-```
-src/
-  app/
-    page.tsx                          # Main orchestrator page
-    layout.tsx                        # Root layout with fonts and theme
-    api/
-      intents/                        # 16 POST routes — write operations
-      runtime/                        # 11 GET routes — read operations
-      rocclaw/                        # Settings management + connection test
-      cron/                           # Cron job management
-      gateway-info/                   # Gateway information
-      gateway-metrics/                # System metrics (local + remote)
-      usage/                          # Token usage data
-    styles/                           # Modular CSS: tokens, components, chat, typography
-  components/                         # Shared UI (ConnectionPage, SystemMetrics, Tasks, etc.)
-  features/agents/
-    components/                       # Agent UI (ChatPanel, InspectPanels, FleetSidebar, etc.)
-    operations/                       # Workflow (pure planning) + Operation (side effects)
-    state/                            # AgentStore (Context+useReducer), SSE stream hook
-    approvals/                        # Exec approval system (10 files, fully wired e2e)
-  lib/
-    controlplane/                     # Runtime singleton, WebSocket adapter, SQLite outbox
-    gateway/                          # Gateway client abstractions and agent config
-    rocclaw/                          # Settings store and coordinator
-    system/                           # ROCm GPU detection + fallback (AMD GPUs)
-    text/                             # Markdown, message extraction, media
-    agents/                           # Agent files and personality builder
-    cron/                             # Cron payload builder and types
-server/
-  index.js                            # Custom Node.js entry point (plain JS)
-  access-gate.js                      # Cookie-based auth
-  network-policy.js                   # Public IP binding protection
-  rocclaw-settings.js                 # Settings resolution cascade
-  rocclaw-install-context.js          # Startup environment detection
-tests/
-  unit/                               # 145 Vitest test files (1,091 tests)
-  e2e/                                # 11 Playwright spec files
-  setup.ts                            # Test setup (localStorage polyfill)
-```
-
-## Development
+## 🛠️ Development
 
 ```bash
 npm run dev          # Dev server with hot reload
@@ -302,8 +338,8 @@ npm run build        # Production build
 npm run start        # Build + start production server
 npm run typecheck    # TypeScript strict checking
 npm run lint         # ESLint
-npm run test         # Unit tests (Vitest, 145 files, 1,091 tests)
-npm run e2e          # E2E tests (Playwright, 11 specs)
+npm run test         # Unit tests (Vitest)
+npm run e2e          # E2E tests (Playwright)
 ```
 
 Run all checks before submitting:
@@ -316,7 +352,9 @@ See [Contributing](docs/CONTRIBUTING.md) for full development setup.
 
 ---
 
-## Troubleshooting
+<a id="troubleshooting"></a>
+
+## 🔍 Troubleshooting
 
 | Problem | Solution |
 |---------|----------|
@@ -329,11 +367,15 @@ See [Contributing](docs/CONTRIBUTING.md) for full development setup.
 
 ---
 
-## Documentation
+<a id="documentation"></a>
+
+## 📚 Documentation
 
 | Document | Description |
 |----------|-------------|
+| [Install Guide](docs/INSTALL.md) | Step-by-step Ubuntu setup with SSH tunnels, Tailscale, env vars |
 | [Architecture](docs/ARCHITECTURE.md) | Technical deep-dive: data flow, API routes, durability model, security |
+| [Compatibility](docs/COMPATIBILITY.md) | Supported platforms and GPU monitoring details |
 | [Contributing](docs/CONTRIBUTING.md) | Development setup, testing, commit conventions, PR guidelines |
 | [Permissions & Sandboxing](docs/permissions-sandboxing.md) | Security model, sandbox modes, exec approvals, tool policies |
 | [Changelog](docs/CHANGELOG.md) | Release history |
@@ -342,12 +384,14 @@ See [Contributing](docs/CONTRIBUTING.md) for full development setup.
 
 <div align="center">
 
-[Documentation](docs/) &middot; [Issues](../../issues) &middot; [Discord](https://discord.gg/EFkFHbZw)
+**[Documentation](docs/)** &middot; **[Issues](../../issues)** &middot; **[Contributing](docs/CONTRIBUTING.md)**
+
+<br/>
+
+<sub>Built by [OpenClaw](https://github.com/openclaw) agents using [Ollama](https://ollama.com) ([Kimi K2](https://ollama.com/library/kimi-k2), [GLM 5.1](https://ollama.com/library/glm-5.1)) and [Claude](https://www.anthropic.com/claude)</sub>
+
+<sub>rocCLAW is a community project — not affiliated with or endorsed by AMD.</sub>
+
+<sub>MIT License &copy; 2026 [SimonCatBot](https://github.com/simoncatbot)</sub>
 
 </div>
-
----
-
-> **Disclaimer:** rocCLAW is a community project and is not affiliated with, endorsed by, or an official product of AMD.
-
-**Acknowledgments:** Built with help from [Ollama](https://ollama.com) models — [Kimi K2](https://huggingface.co/moonshotai/Kimi-K2), [GLM 5.1](https://huggingface.co/THUDM/GLM-5.1), and [Claude](https://www.anthropic.com/claude).
