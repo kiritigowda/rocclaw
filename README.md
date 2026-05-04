@@ -89,7 +89,9 @@ See also: [full install guide](docs/INSTALL.md) · [setup guides →](#setup-gui
 
 ## 🏗️ Local + Cloud Hybrid Fleet
 
-<!-- TODO: Add screenshot showing the token usage dashboard with per-agent/per-model breakdown -->
+<div align="center">
+<img src="public/screenshots/app-token.png" alt="Agents, System Metrics, Graph, and Token Usage tabs — per-agent and per-model breakdown" width="900" />
+</div>
 
 **Local agents** run on your hardware with open-weight models via [Ollama](https://ollama.com), vLLM, or any local provider. They handle the predictable workload — log monitoring, scheduled reports, file processing, data syncing, health checks. Zero token cost, and they retain memory across sessions so they improve without burning cloud credits.
 
@@ -111,11 +113,15 @@ See also: [full install guide](docs/INSTALL.md) · [setup guides →](#setup-gui
 
 **Chat with any agent** — Real-time streaming with thinking traces, tool call visibility, and inline exec approvals. Approve or deny shell commands right in the chat — allow-once, allow-always, or deny.
 
-<!-- TODO: Add screenshot showing the tasks/cron dashboard -->
+<div align="center">
+<img src="public/screenshots/app-tasks.png" alt="Tasks kanban board — Queued, Executing, Pending, and Done columns with drag-and-drop" width="900" />
+</div>
 
 **Put agents on autopilot** — Schedule recurring jobs with drag-and-drop — run every 5 minutes, daily at 9am, or any cron expression. Agents retain context across sessions and act on heartbeat schedules independently.
 
-<!-- TODO: Add screenshot showing the agent configuration panel -->
+<div align="center">
+<img src="public/screenshots/app-skills.png" alt="Skills tab — per-agent skill assignment and 12 featured skills from ClawHub" width="900" />
+</div>
 
 **Configure without SSH** — Edit any agent's personality files and permissions directly in the browser. Each agent has 7 personality files that define its behavior:
 
@@ -136,7 +142,9 @@ See also: [full install guide](docs/INSTALL.md) · [setup guides →](#setup-gui
 
 ## 📊 Monitor Your Hardware
 
-<!-- TODO: Add screenshot showing system metrics and graph view -->
+<div align="center">
+<img src="public/screenshots/app-photo-booth.png" alt="System Metrics, Graph View, and Photo Booth — GPU at full load during avatar generation" width="900" />
+</div>
 
 When your agents run on local hardware, you need to see how that hardware is doing. rocCLAW provides live system metrics so you know whether your GPUs are earning their keep or sitting idle.
 
