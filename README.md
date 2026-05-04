@@ -109,8 +109,6 @@ See also: [full install guide](docs/INSTALL.md) · [setup guides →](#setup-gui
 
 ## ⚡ What You Can Do
 
-<!-- TODO: Add screenshot showing the chat interface with thinking traces -->
-
 **Chat with any agent** — Real-time streaming with thinking traces, tool call visibility, and inline exec approvals. Approve or deny shell commands right in the chat — allow-once, allow-always, or deny.
 
 <div align="center">
