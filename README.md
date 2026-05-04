@@ -12,6 +12,8 @@ The operator dashboard for [OpenClaw](https://github.com/openclaw) — manage a 
 [![GitHub Release](https://img.shields.io/github/v/release/simoncatbot/rocclaw?include_prereleases&logo=github)](https://github.com/simoncatbot/rocclaw/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+<img src="public/screenshots/app-main.png" alt="rocCLAW dashboard" width="900" />
+
 </div>
 
 ---
@@ -205,7 +207,9 @@ A hybrid fleet makes sense anywhere you have repetitive work alongside tasks tha
 
 ## 📋 Dashboard at a Glance
 
-<!-- TODO: Add screenshot showing the full dashboard with multiple tabs open -->
+<div align="center">
+<img src="public/screenshots/app-main.png" alt="rocCLAW dashboard — Agents, Chat, System Metrics, and Graph tabs open side-by-side" width="900" />
+</div>
 
 9 toggleable tabs, shown side-by-side:
 
