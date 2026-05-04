@@ -82,7 +82,6 @@ test("cloud tab uses local defaults when available", async ({ page }) => {
   // Click Cloud tab
   await page.getByRole("tab", { name: /^Cloud$/ }).click();
 
-
   // Should show Cloud tab content
   await expect(page.getByText("Cloud Setup")).toBeVisible();
   await page.getByRole("button", { name: "Use Local Defaults" }).click();
