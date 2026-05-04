@@ -27,6 +27,8 @@ import {
   Upload,
   ImageIcon,
   Trash2,
+  Play,
+  Power,
 } from "lucide-react";
 
 // ─── Style definitions ───────────────────────────────────────────────────────
@@ -118,6 +120,8 @@ export function PhotoBoothDashboard() {
   const [jobs, setJobs] = useState<StyleJob[]>([]);
   const [processing, setProcessing] = useState(false);
   const [comfyuiStatus, setComfyUIStatus] = useState<ComfyUIStatus>("checking");
+  const [startingComfyUI, setStartingComfyUI] = useState(false);
+  const [comfyuiStartError, setComfyUIStartError] = useState<string | null>(null);
 
   // Gallery persistence
   const [gallery, setGallery] = useState<GalleryEntry[]>(loadGallery);
@@ -142,6 +146,31 @@ export function PhotoBoothDashboard() {
     void checkComfyUIStatus().then(setComfyUIStatus);
     const interval = setInterval(() => { void checkComfyUIStatus().then(setComfyUIStatus); }, 30000);
     return () => clearInterval(interval);
+  }, []);
+
+  // ── Start ComfyUI ───────────────────────────────────────────────────────
+  const startComfyUI = useCallback(async () => {
+    setStartingComfyUI(true);
+    setComfyUIStartError(null);
+    try {
+      const res = await fetch("/api/photobooth/start", {
+        method: "POST",
+        signal: AbortSignal.timeout(70000),
+      });
+      const data = await res.json().catch(() => ({ success: false, message: "Unknown error" }));
+      if (data.success) {
+        // Wait a moment then recheck status
+        await new Promise((r) => setTimeout(r, 2000));
+        const newStatus = await checkComfyUIStatus();
+        setComfyUIStatus(newStatus);
+      } else {
+        setComfyUIStartError(data.message ?? "Failed to start ComfyUI");
+      }
+    } catch (err) {
+      setComfyUIStartError(err instanceof Error ? err.message : "Failed to start ComfyUI");
+    } finally {
+      setStartingComfyUI(false);
+    }
   }, []);
 
   // ── Attach pending stream to video element after mount ──────────────────
@@ -467,6 +496,20 @@ export function PhotoBoothDashboard() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {comfyuiStatus === "offline" && (
+            <button
+              onClick={startComfyUI}
+              disabled={startingComfyUI}
+              aria-label={startingComfyUI ? "Starting ComfyUI..." : "Start ComfyUI"}
+              className="ui-btn-primary flex items-center gap-1.5 !min-h-0 px-2.5 py-1 text-[10px] font-medium"
+            >
+              {startingComfyUI ? (
+                <><Loader className="h-3 w-3 animate-spin" /> Starting...</>
+              ) : (
+                <><Power className="h-3 w-3" /> Start ComfyUI</>
+              )}
+            </button>
+          )}
           <div className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-[10px] font-medium ${
             comfyuiStatus === "online" ? "border-green-500/30 bg-green-500/10 text-green-400"
               : comfyuiStatus === "offline" ? "border-red-500/30 bg-red-500/10 text-red-400"
@@ -477,6 +520,21 @@ export function PhotoBoothDashboard() {
           </div>
         </div>
       </div>
+
+      {/* ComfyUI Start Error Banner */}
+      {comfyuiStartError && (
+        <div className="flex items-center gap-1.5 border-b border-red-500/30 bg-red-500/10 px-4 py-1.5 text-[10px] text-red-400">
+          <AlertTriangle className="h-3 w-3 flex-shrink-0" />
+          <span>{comfyuiStartError}</span>
+          <button
+            onClick={() => setComfyUIStartError(null)}
+            aria-label="Dismiss error"
+            className="ml-auto text-red-400/70 hover:text-red-400"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* ── Two columns (stacked on mobile) ── */}
       <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-2 overflow-hidden">
