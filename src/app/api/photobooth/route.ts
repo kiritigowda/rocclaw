@@ -90,9 +90,33 @@ const STYLE_PROMPTS: Record<
   },
 };
 
+// Query ComfyUI for available checkpoint models, prefer SDXL
+async function resolveCheckpoint(): Promise<string> {
+  try {
+    const res = await fetch(
+      `${COMFYUI_API_URL}/object_info/CheckpointLoaderSimple`,
+      { signal: AbortSignal.timeout(5000) }
+    );
+    if (!res.ok) throw new Error(`object_info returned ${res.status}`);
+    const info = await res.json();
+    const choices: string[] =
+      info?.CheckpointLoaderSimple?.input?.required?.ckpt_name?.[0] ?? [];
+    if (choices.length === 0) throw new Error("No checkpoints found");
+    // Prefer SDXL models, then any model
+    const sdxl = choices.find(
+      (c) => /sdxl|sd_xl/i.test(c) && /\.safetensors$|\.ckpt$/i.test(c)
+    );
+    return sdxl ?? choices[0];
+  } catch (err) {
+    console.warn("Could not resolve checkpoint from ComfyUI, using default:", err);
+    return "sd_xl_base_1.0.safetensors";
+  }
+}
+
 function buildWorkflow(
   imageName: string,
   style: StyleName,
+  checkpointName: string,
   options: {
     denoise?: number;
     steps?: number;
@@ -107,7 +131,7 @@ function buildWorkflow(
   return {
     "3": {
       class_type: "CheckpointLoaderSimple",
-      inputs: { ckpt_name: "sd_xl_base_1.0.safetensors" },
+      inputs: { ckpt_name: checkpointName },
     },
     "4": {
       class_type: "CLIPTextEncode",
@@ -261,6 +285,9 @@ export async function POST(request: NextRequest) {
       finalImageName = uploadData.name ?? finalImageName;
     }
 
+    // Resolve the checkpoint model from ComfyUI
+    const checkpointName = await resolveCheckpoint();
+
     // Queue generation for each style
     const jobs: {
       style: string;
@@ -268,7 +295,7 @@ export async function POST(request: NextRequest) {
     }[] = [];
 
     for (const style of requestedStyles) {
-      const workflow = buildWorkflow(finalImageName, style, {
+      const workflow = buildWorkflow(finalImageName, style, checkpointName, {
         denoise,
         steps,
         seed,
