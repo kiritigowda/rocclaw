@@ -66,9 +66,29 @@ export async function GET(request: NextRequest) {
     }
 
     if (jobStatus === "error") {
+      // ComfyUI messages are arrays of tuples: [["type", {message: "..."}], ...]
+      let errorMessage = "Generation failed";
+      const messages = entry.status?.messages;
+      if (Array.isArray(messages) && messages.length > 0) {
+        const parts: string[] = [];
+        for (const msg of messages) {
+          if (Array.isArray(msg) && msg.length >= 2) {
+            // Tuple format: ["execution_error", { message: "...", ... }]
+            const detail = typeof msg[1] === "object" && msg[1] !== null
+              ? (msg[1] as Record<string, unknown>).message ?? JSON.stringify(msg[1])
+              : String(msg[1]);
+            parts.push(`${msg[0]}: ${detail}`);
+          } else if (typeof msg === "string") {
+            parts.push(msg);
+          } else {
+            parts.push(String(msg));
+          }
+        }
+        if (parts.length > 0) errorMessage = parts.join("; ");
+      }
       const status: JobStatus = {
         status: "error",
-        error: entry.status?.messages?.join("; ") ?? "Generation failed",
+        error: errorMessage,
       };
       return NextResponse.json(status);
     }

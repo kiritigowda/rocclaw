@@ -145,7 +145,7 @@ describe("Photo Booth API - Status Check", () => {
     expect(data.status).toBe("running");
   });
 
-  it("returns error status for failed job", async () => {
+  it("returns error status for failed job with string messages", async () => {
     mockFetch({
       history: {
         ok: true,
@@ -163,6 +163,35 @@ describe("Photo Booth API - Status Check", () => {
 
     expect(data.status).toBe("error");
     expect(data.error).toContain("Out of memory");
+  });
+
+  it("returns readable error for ComfyUI tuple-format messages", async () => {
+    // ComfyUI returns messages as [["type", {message: "..."}]] tuples
+    mockFetch({
+      history: {
+        ok: true,
+        json: {
+          "test-tuple": {
+            status: {
+              status_str: "error",
+              messages: [
+                ["execution_error", { message: "CheckpointLoaderSimple: model not found", node_type: "CheckpointLoaderSimple", node_id: "3" }],
+              ],
+            },
+          },
+        },
+      },
+    });
+
+    const req = new NextRequest("http://localhost/api/photobooth/status?promptId=test-tuple");
+    const res = await statusGet(req);
+    const data = await res.json();
+
+    expect(data.status).toBe("error");
+    expect(data.error).toContain("execution_error");
+    expect(data.error).toContain("CheckpointLoaderSimple: model not found");
+    // Must NOT contain "[object Object]"
+    expect(data.error).not.toContain("[object Object]");
   });
 });
 
